@@ -3,7 +3,8 @@
  * Versión 0.02
  *
  * Buscador de música cristiana, alabanzas, adoración, predicaciones y podcasts.
- * Sistema de cola tipo DJ: 1 → 2 → 3, reproducción continua en pie de página.
+ * Sistema de cola tipo DJ: selecciona las canciones que quieras escuchar (1, 2, 3…)
+ * y se reproducen en secuencia en el mismo entorno, sin modal.
  */
 
 const app = {
@@ -23,36 +24,12 @@ const app = {
       if (e.key === 'Enter') this.searchFromHero();
     });
 
-    // Mini player - controles de cola tipo DJ
-    document.getElementById('miniPrev').addEventListener('click', () => this.prev());
-    document.getElementById('miniPlayPause').addEventListener('click', () => this.togglePlayPause());
-    document.getElementById('miniNext').addEventListener('click', () => this.next());
-    document.getElementById('miniExpand').addEventListener('click', () => {
-      if (this.getCurrentQueueItem()) player.openFull(this.getCurrentQueueItem());
-    });
-
-    // Volumen y progreso del mini player
-    document.getElementById('miniVolume').addEventListener('input', (e) => {
-      if (player.audioEl) player.audioEl.volume = parseFloat(e.target.value);
-    });
-    document.getElementById('miniProgress').addEventListener('input', (e) => {
-      if (player.audioEl && player.audioEl.duration) {
-        player.audioEl.currentTime = (parseFloat(e.target.value) / 100) * player.audioEl.duration;
-      }
-    });
-    player.audioEl.addEventListener('timeupdate', () => {
-      if (player.audioEl && player.audioEl.duration) {
-        const pct = (player.audioEl.currentTime / player.audioEl.duration) * 100;
-        document.getElementById('miniProgress').value = pct;
-      }
-    });
-
     // Auto-avance al terminar audio (cola tipo DJ)
     player.audioEl.addEventListener('ended', () => {
       this.next();
     });
 
-    // Cerrar modales al hacer clic fuera
+    // Cerrar modales al hacer clic fuera (auth y usuario)
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('open');
@@ -62,7 +39,7 @@ const app = {
     // Inicializar reproductor
     player.init();
 
-    // Render inicial: mostrar todo el contenido cristiano
+    // Render inicial
     this.renderResults();
   },
 
@@ -80,14 +57,17 @@ const app = {
   },
 
   playItem(item) {
+    // Clic en el cuadro: agregar a cola y reproducir inmediatamente
     this.addToQueue(item);
     this.queueIndex = this.queue.findIndex(q => q.id === item.id);
     this.playCurrent();
   },
 
   addToQueueOnly(item) {
+    // Botón +: solo agregar a la cola sin reproducir todavía
     this.addToQueue(item);
     app.showToast('Agregado a la cola', 'success');
+    this.renderQueue();
   },
 
   next() {
@@ -105,9 +85,20 @@ const app = {
   playCurrent() {
     const item = this.getCurrentQueueItem();
     if (!item) return;
+
+    // Mostrar en reproductor integrado
+    this.renderNowPlaying(item);
+    document.getElementById('nowPlaying').classList.add('visible');
+
+    // Reproducir (video o audio)
     player.play(item);
-    this.updateMiniPlayer(item);
-    document.getElementById('miniPlayer').style.display = 'flex';
+
+    // Actualizar mini indicadores (títulos solo, no mostrar mini player)
+    document.getElementById('miniTitle').textContent = item.title;
+    document.getElementById('miniArtist').textContent = `${item.channel} • ${item.category}`;
+    document.getElementById('miniPlayPause').textContent = player.isPlaying ? '⏸' : '▶';
+
+    this.renderQueue();
   },
 
   togglePlayPause() {
@@ -115,15 +106,106 @@ const app = {
     if (!item) return;
     if (player.isPlaying && player.audioEl) {
       player.audioEl.pause();
+      document.getElementById('miniPlayPause').textContent = '▶';
     } else {
       this.playCurrent();
     }
   },
 
-  updateMiniPlayer(item) {
-    document.getElementById('miniTitle').textContent = item.title;
-    document.getElementById('miniArtist').textContent = `${item.channel} • ${item.category}`;
-    document.getElementById('miniPlayPause').textContent = player.isPlaying ? '⏸' : '▶';
+  clearQueue() {
+    this.queue = [];
+    this.queueIndex = -1;
+    player.audioEl.pause();
+    player.audioEl.src = '';
+    player.isPlaying = false;
+    document.getElementById('miniPlayPause').textContent = '▶';
+    document.getElementById('nowPlaying').classList.remove('visible');
+    document.getElementById('npMedia').innerHTML = `
+      <div class="np-empty">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
+        <p>Selecciona una canción para comenzar a reproducir</p>
+      </div>
+    `;
+    this.renderQueue();
+    app.showToast('Cola limpiada', 'success');
+  },
+
+  removeFromQueue(index) {
+    this.queue.splice(index, 1);
+    if (this.queueIndex >= this.queue.length) {
+      this.queueIndex = this.queue.length > 0 ? this.queue.length - 1 : -1;
+    }
+    if (this.queueIndex >= 0) {
+      this.playCurrent();
+    } else {
+      document.getElementById('nowPlaying').classList.remove('visible');
+      document.getElementById('npMedia').innerHTML = `
+        <div class="np-empty">
+          <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
+          <p>Selecciona una canción para comenzar a reproducir</p>
+        </div>
+      `;
+    }
+    this.renderQueue();
+  },
+
+  renderQueue() {
+    const list = document.getElementById('queueList');
+    list.innerHTML = '';
+
+    if (this.queue.length === 0) {
+      list.innerHTML = '<div class="queue-empty">La cola está vacía. Agrega canciones presionando <strong>+</strong> en cualquier cuadro.</div>';
+      return;
+    }
+
+    this.queue.forEach((item, idx) => {
+      const isCurrent = idx === this.queueIndex;
+      const div = document.createElement('div');
+      div.className = `queue-item ${isCurrent ? 'current' : ''}`;
+      div.onclick = () => {
+        this.queueIndex = idx;
+        this.playCurrent();
+      };
+      div.innerHTML = `
+        <div class="queue-number">${idx + 1}</div>
+        <div class="queue-item-info">
+          <div class="queue-title">${this.escapeHtml(item.title)}</div>
+          <div class="queue-channel">${this.escapeHtml(item.channel)} • ${item.category}</div>
+        </div>
+        <div class="queue-item-actions">
+          <button class="btn btn-outline" onclick="event.stopPropagation(); app.removeFromQueue(${idx})" title="Quitar">✕</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  },
+
+  renderNowPlaying(item) {
+    const media = document.getElementById('npMedia');
+    if (item.type === 'video' && item.youtubeId) {
+      media.innerHTML = `
+        <iframe
+          width="560" height="315"
+          src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1"
+          title="${item.title}"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      `;
+    } else {
+      media.innerHTML = `
+        <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;background:#000;border-radius:12px;">
+          <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
+          <div style="font-weight:700;">${this.escapeHtml(item.title)}</div>
+          <div style="margin-top:0.5rem;color:#64748b;">Modo audio - demostración</div>
+          <audio controls style="margin-top:1rem;width:80%;max-width:320px;" onended="app.next()">
+            <source src="${item.previewUrl || ''}" type="audio/mpeg">
+            Tu navegador no soporta audio.
+          </audio>
+        </div>
+      `;
+    }
   },
 
   /* ---------- Búsqueda y categorías ---------- */
@@ -212,6 +294,7 @@ const app = {
       const card = document.createElement('article');
       card.className = 'card';
       const isCurrent = this.getCurrentQueueItem() && this.getCurrentQueueItem().id === item.id;
+
       card.innerHTML = `
         <div class="card-thumb">
           <img src="${item.thumbnail}" alt="${item.title}" loading="lazy" />
@@ -225,7 +308,7 @@ const app = {
           <div class="card-title">${this.escapeHtml(item.title)}</div>
           <div class="card-channel">${this.escapeHtml(item.channel)}</div>
           <div class="card-actions">
-            <button class="btn-play" data-item-id="${item.id}" title="Reproducir">
+            <button class="btn-play" data-item-id="${item.id}" title="Reproducir ahora">
               ▶
             </button>
             <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola">
@@ -234,6 +317,13 @@ const app = {
           </div>
         </div>
       `;
+
+      // Todo el cuadro es clickeable para reproducir
+      card.addEventListener('click', (e) => {
+        // Si el clic fue en los botones de acción, no disparar doble acción
+        if (e.target.closest('.btn-play') || e.target.closest('.btn-add')) return;
+        this.playItem(item);
+      });
 
       const btnPlay = card.querySelector('.btn-play');
       const btnAdd = card.querySelector('.btn-add');
@@ -245,7 +335,7 @@ const app = {
         e.stopPropagation();
         this.addToQueueOnly(item);
       });
-      card.querySelector('.card-body').addEventListener('dblclick', () => this.playItem(item));
+
       grid.appendChild(card);
     });
   },

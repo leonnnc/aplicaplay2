@@ -14,7 +14,7 @@
 
   <!-- Barra de versión -->
   <div class="version-bar">
-    <span class="version-badge">v0.01</span>
+    <span class="version-badge">v0.02</span>
     <span class="version-text">Versión inicial • Música Cristiana</span>
   </div>
 
@@ -197,26 +197,32 @@
     </div>
   </div>
 
-  <!-- Reproductor completo (modal) -->
-  <div class="modal-overlay" id="playerModal">
-    <div class="modal player-modal">
-      <button class="modal-close" onclick="player.close()">&times;</button>
-      <div class="player-header">
-        <h2 id="playerTitle">Reproduciendo</h2>
-        <span class="player-type" id="playerType">Video</span>
-      </div>
-      <div class="player-content">
-        <div id="playerEmbed">
-          <!-- Aquí se inyecta iframe de YouTube o audio -->
-        </div>
-      </div>
-      <div class="player-actions">
-        <button class="btn btn-outline" onclick="player.addToPlaylist()">Agregar a playlist</button>
-        <button class="btn btn-primary" onclick="player.share()">Compartir</button>
-        <button class="btn btn-primary btn-block" onclick="player.toggleFullscreen()">Pantalla completa</button>
+  <!-- Reproductor integrado (sin modal) -->
+  <section class="now-playing" id="nowPlaying">
+    <div class="np-header">
+      <h3>🎵 Reproduciendo ahora</h3>
+      <button class="btn btn-outline btn-sm" onclick="app.clearQueue()">Limpiar cola</button>
+    </div>
+    <div class="np-media" id="npMedia">
+      <div class="np-empty">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
+        <p>Selecciona una canción para comenzar a reproducir</p>
       </div>
     </div>
-  </div>
+    <div class="np-controls">
+      <button class="btn btn-outline" onclick="app.prev()">⏮ Anterior</button>
+      <button class="btn btn-primary" onclick="app.togglePlayPause()">▶ Pausa</button>
+      <button class="btn btn-outline" onclick="app.next()">Siguiente ⏭</button>
+    </div>
+  </section>
+
+  <!-- Cola tipo DJ -->
+  <section class="queue-section" id="queueSection">
+    <h3>📋 Cola de reproducción (DJ)</h3>
+    <div class="queue-list" id="queueList">
+      <div class="queue-empty">La cola está vacía. Agrega canciones presionando <strong>+</strong> en cualquier cuadro.</div>
+    </div>
+  </section>
 
   <!-- Toast -->
   <div class="toast" id="toast">
@@ -229,7 +235,7 @@
         <div class="logo-icon">▶</div>
         <div class="logo-text">Cristian<span>Play</span></div>
       </div>
-      <p class="footer-text">Sistema de búsqueda netamente cristiano. Versión <span id="footerVersion">0.01</span>. Diseñado para alabanzas, adoración, predicaciones y podcasts del evangelio.</p>
+      <p class="footer-text">Sistema de búsqueda netamente cristiano. Versión <span id="footerVersion">0.02</span>. Diseñado para alabanzas, adoración, predicaciones y podcasts del evangelio.</p>
       <div class="footer-disclaimer">
         <small>Los resultados provienen de fuentes públicas de YouTube. CristianPlay no aloja contenido propio. Úsalo responsablemente.</small>
       </div>
