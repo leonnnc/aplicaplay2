@@ -152,18 +152,11 @@ const app = {
       <div class="card-body">
         <div class="card-title">${this.escapeHtml(item.title)}</div>
         <div class="card-channel">${this.escapeHtml(item.channel)}</div>
-        <div class="card-actions">
-          <button class="btn-play" title="Reproducir ahora (cambia el actual)">▶ Ahora</button>
-          <button class="btn-add" title="Agregar a la lista de espera (no interrumpe)">+</button>
-        </div>
       </div>
     `;
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.btn-play') || e.target.closest('.btn-add')) return;
       this.playNow(item);
     });
-    card.querySelector('.btn-play').addEventListener('click', (e) => { e.stopPropagation(); this.playNow(item); });
-    card.querySelector('.btn-add').addEventListener('click', (e) => { e.stopPropagation(); this.addToQueueOnly(item); });
     return card;
   },
 
