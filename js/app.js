@@ -1,39 +1,35 @@
 /**
  * CristianPlay - Aplicación principal
- * Versión 0.06
+ * Versión 0.07
  *
- * Un solo buscador (arriba), videos destacados, reproductor integrado,
- * cola tipo DJ abajo que NO interrumpe el video actual.
+ * Orden: Búsqueda arriba → Contenido (destacados o resultados) → Reproductor → Cola abajo
+ * Cola tipo DJ: no interrumpe el video actual.
  */
 
 const app = {
   currentCategory: null,
   currentQuery: '',
   results: [],
-  queue: [],        // cola de espera
-  queueIndex: -1,   // índice del video que suena ahora
+  queue: [],
+  queueIndex: -1,
   isMusicMode: false,
 
   init() {
-    // Búsqueda única (hero)
     document.getElementById('searchBtn').addEventListener('click', () => this.handleSearch());
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.handleSearch();
     });
 
-    // Cerrar modales al hacer clic fuera
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('open');
       });
     });
 
-    // Admin visible solo si es admin
     if (auth.isAdmin()) {
       document.getElementById('adminBtn').style.display = 'flex';
     }
 
-    // Cargar videos destacados al inicio
     this.renderFeatured();
     this.updateMusicModeUI();
   },
@@ -83,43 +79,36 @@ const app = {
     list.innerHTML = r.slice(0,10).map((x,i) => `<div class="ranking-item"><div class="ranking-position">${i+1}</div><div class="ranking-info"><strong>${this.escapeHtml(x.title)}</strong><span>${this.escapeHtml(x.channel)}</span><div class="ranking-count">${x.count} reproducción${x.count!==1?'es':''}</div></div></div>`).join('');
   },
 
-  /* ---------- Videos destacados ---------- */
+  /* ---------- Contenido (destacados o resultados) ---------- */
   renderFeatured() {
-    const grid = document.getElementById('featuredGrid');
+    const grid = document.getElementById('contentGrid');
+    const title = document.getElementById('contentTitle');
     const featured = window.__cpMock.getMockResults('', null).slice(0, 8);
     grid.innerHTML = '';
-    featured.forEach(item => {
-      const card = this.createCard(item, false);
-      grid.appendChild(card);
-    });
+    title.textContent = '🎵 Videos Cristianos Destacados';
+    document.getElementById('emptyState').style.display = 'none';
+    featured.forEach(item => grid.appendChild(this.createCard(item, false)));
   },
-
-  /* ---------- Resultados de búsqueda ---------- */
   handleSearch() {
     const input = document.getElementById('searchInput').value.trim();
     this.currentQuery = input;
     this.currentCategory = null;
-    this.renderResults();
-    document.getElementById('resultsSection').style.display = 'block';
-    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    this.renderSearchResults();
   },
   goHome() {
     this.currentCategory = null;
     this.currentQuery = '';
     document.getElementById('searchInput').value = '';
-    document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('featuredSection').style.display = 'block';
+    this.renderFeatured();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
-  renderResults() {
-    const grid = document.getElementById('resultsGrid');
-    const countEl = document.getElementById('resultsCount');
-    const titleEl = document.getElementById('resultsTitle');
+  renderSearchResults() {
+    const grid = document.getElementById('contentGrid');
+    const title = document.getElementById('contentTitle');
     const empty = document.getElementById('emptyState');
     const results = window.__cpMock.getMockResults(this.currentQuery, this.currentCategory);
     grid.innerHTML = '';
-    countEl.textContent = `${results.length} resultado${results.length!==1?'s':''}`;
-    titleEl.textContent = this.currentQuery ? `Resultados para "${this.currentQuery}"` : 'Resultados';
+    title.textContent = this.currentQuery ? `Resultados para "${this.currentQuery}"` : 'Resultados';
     if (results.length === 0) { empty.style.display='block'; grid.style.display='none'; return; }
     empty.style.display='none'; grid.style.display='grid';
     results.forEach(item => grid.appendChild(this.createCard(item, false)));
@@ -143,7 +132,6 @@ const app = {
         </button>
       </div>
     `;
-    // Clic en el cuadro: agregar a lista (NO interrumpe)
     card.addEventListener('click', (e) => {
       if (e.target.closest('.btn-play') || e.target.closest('.btn-add')) return;
       this.addToQueueOnly(item);
@@ -153,7 +141,7 @@ const app = {
     return card;
   },
 
-  /* ---------- Cola tipo DJ (no corta el actual) ---------- */
+  /* ---------- Cola tipo DJ ---------- */
   getCurrentQueueItem() { return this.queue[this.queueIndex] || null; },
   addToQueue(item) {
     if (!this.queue.some(q => q.id === item.id)) {

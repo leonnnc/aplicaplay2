@@ -14,11 +14,11 @@
 
   <!-- Barra de versión -->
   <div class="version-bar">
-    <span class="version-badge">v0.06</span>
-    <span class="version-text">Música Cristiana • Modo DJ</span>
+    <span class="version-badge">v0.07</span>
+    <span class="version-text">Búsqueda arriba • Modo DJ</span>
   </div>
 
-  <!-- Navegación simple -->
+  <!-- Navegación -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <div class="nav-logo" onclick="app.goHome()">
@@ -48,7 +48,7 @@
       <h1 class="hero-title">
         Bienvenido a <span class="gradient-text">CristianPlay</span>
       </h1>
-      <p class="hero-subtitle">Busca alabanzas, adoración, predicaciones y podcasts cristianos. Agrega videos a tu lista y ellos esperan su turno sin interrumpir lo que suena.</p>
+      <p class="hero-subtitle">Busca alabanzas, adoración, predicaciones y podcasts cristianos. Los videos se agregan a tu lista de espera abajo sin interrumpir el que suena.</p>
       <div class="hero-search">
         <input type="text" id="searchInput" placeholder="Busca alabanzas, adoración, predicaciones, podcasts cristianos..." autocomplete="off" />
         <button class="btn btn-primary btn-lg" id="searchBtn">Buscar</button>
@@ -57,11 +57,19 @@
     <div class="hero-bg"></div>
   </header>
 
-  <!-- Videos destacados (mejores videos cristianos) -->
-  <section class="featured-section" id="featuredSection">
-    <h2 class="section-title">🎵 Videos Cristianos Destacados</h2>
-    <div class="featured-grid" id="featuredGrid">
-      <!-- Los videos destacados se inyectan aquí -->
+  <!-- Resultados / Videos destacados (inmediatamente abajo de la búsqueda) -->
+  <section class="content-section" id="contentSection">
+    <div class="content-header">
+      <h2 id="contentTitle">🎵 Videos Cristianos Destacados</h2>
+      <button class="btn btn-outline btn-sm" onclick="app.goHome()">Volver al inicio</button>
+    </div>
+    <div class="content-grid" id="contentGrid">
+      <!-- Aquí se inyectan videos destacados o resultados de búsqueda -->
+    </div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <div class="empty-icon">🔍</div>
+      <h3>No se encontraron resultados</h3>
+      <p>Intenta con otro término.</p>
     </div>
   </section>
 
@@ -84,28 +92,11 @@
     </div>
   </section>
 
-  <!-- Lista de espera (cola DJ) abajo -->
+  <!-- Cola de espera (abajo) -->
   <section class="queue-section" id="queueSection">
     <h3>📋 Lista de espera (tu cola DJ)</h3>
     <div class="queue-list" id="queueList">
       <div class="queue-empty">La lista está vacía. Presiona <strong>+</strong> en cualquier video para agregarlo.</div>
-    </div>
-  </section>
-
-  <!-- Resultados de búsqueda -->
-  <section class="results-section" id="resultsSection" style="display:none;">
-    <div class="results-header">
-      <h2 id="resultsTitle">Resultados</h2>
-      <span class="results-count" id="resultsCount">0 encontrados</span>
-      <button class="btn btn-outline btn-sm" onclick="app.goHome()">Volver al inicio</button>
-    </div>
-    <div class="results-grid" id="resultsGrid">
-      <!-- Cards inyectadas por JS -->
-    </div>
-    <div id="emptyState" class="empty-state" style="display:none;">
-      <div class="empty-icon">🔍</div>
-      <h3>No se encontraron resultados</h3>
-      <p>Intenta con otro término.</p>
     </div>
   </section>
 
@@ -177,7 +168,7 @@
   <footer>
     <div class="footer-content">
       <div class="footer-brand"><div class="logo-icon">▶</div><div class="logo-text">Cristian<span>Play</span></div></div>
-      <p class="footer-text">Sistema de búsqueda netamente cristiano. Versión <span id="footerVersion">0.06</span>.</p>
+      <p class="footer-text">Sistema de búsqueda netamente cristiano. Versión <span id="footerVersion">0.07</span>.</p>
       <div class="footer-disclaimer"><small>Los resultados provienen de fuentes públicas de YouTube. CristianPlay no aloja contenido propio.</small></div>
     </div>
   </footer>
