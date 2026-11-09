@@ -1,9 +1,9 @@
 /**
  * CristianPlay - Reproductor de música y video
- * Versión 0.01
+ * Versión 0.02
  *
- * Permite reproducir contenido simulado y abrir en YouTube.
- * En producción, integra YouTube IFrame Player API o YouTube Data API.
+ * Reproduce contenido en el mismo entorno.
+ * Soporta cola tipo DJ y auto-avance al terminar audio.
  */
 
 const player = {
@@ -12,22 +12,33 @@ const player = {
   isPlaying: false,
 
   init() {
-    // Crear elemento de audio oculto para modo sonido
     this.audioEl = new Audio();
     this.audioEl.preload = 'metadata';
 
-    this.audioEl.addEventListener('play', () => { this.isPlaying = true; this.updateMiniPlayBtn(); });
-    this.audioEl.addEventListener('pause', () => { this.isPlaying = false; this.updateMiniPlayBtn(); });
-    this.audioEl.addEventListener('ended', () => { this.isPlaying = false; this.updateMiniPlayBtn(); });
-
-    // Eventos mini player
-    document.getElementById('miniPlayPause').addEventListener('click', () => this.togglePlayPause());
-    document.getElementById('miniPrev').addEventListener('click', () => app.showToast('Anterior - función en próxima versión', 'warning'));
-    document.getElementById('miniNext').addEventListener('click', () => app.showToast('Siguiente - función en próxima versión', 'warning'));
-    // miniExpand se inicializa también desde app.init(); se deja aquí como respaldo
-    document.getElementById('miniExpand').addEventListener('click', () => {
-      if (this.currentItem) this.openFull(this.currentItem);
+    this.audioEl.addEventListener('play', () => {
+      this.isPlaying = true;
+      this.updateMiniPlayBtn();
     });
+    this.audioEl.addEventListener('pause', () => {
+      this.isPlaying = false;
+      this.updateMiniPlayBtn();
+    });
+    this.audioEl.addEventListener('ended', () => {
+      this.isPlaying = false;
+      this.updateMiniPlayBtn();
+      // El auto-avance lo maneja app.js mediante su propio listener de 'ended'
+    });
+
+    // Mini player events (app.js también los vincula, pero dejamos respaldo)
+    document.getElementById('miniPlayPause').addEventListener('click', () => {
+      if (app.getCurrentQueueItem()) {
+        if (this.isPlaying && this.audioEl) this.audioEl.pause();
+        else app.playCurrent();
+      }
+    });
+    document.getElementById('miniPrev').addEventListener('click', () => app.prev());
+    document.getElementById('miniNext').addEventListener('click', () => app.next());
+
     document.getElementById('miniVolume').addEventListener('input', (e) => {
       if (this.audioEl) this.audioEl.volume = parseFloat(e.target.value);
     });
@@ -46,9 +57,7 @@ const player = {
     // Cerrar modales al hacer clic fuera
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          overlay.classList.remove('open');
-        }
+        if (e.target === overlay) overlay.classList.remove('open');
       });
     });
   },
@@ -56,12 +65,11 @@ const player = {
   play(item) {
     this.currentItem = item;
     window.__cpStorage.addHistory(item);
-    this.updateMiniPlayer(item);
+    app.updateMiniPlayer(item);
     document.getElementById('miniPlayer').style.display = 'flex';
 
     if (item.type === 'audio') {
       this.openFull(item);
-      // Simular reproducción de audio (en producción sería una URL real de audio)
       this.audioEl.pause();
       this.audioEl.src = '';
       this.isPlaying = false;
@@ -80,7 +88,6 @@ const player = {
     document.getElementById('playerType').textContent = item.type === 'video' ? 'Video' : 'Audio';
     const embed = document.getElementById('playerEmbed');
 
-    // Si es video, embed de YouTube. Si es audio, placeholder con controles de audio.
     if (item.type === 'video' && item.youtubeId) {
       embed.innerHTML = `
         <iframe
@@ -96,7 +103,7 @@ const player = {
       embed.innerHTML = `
         <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;background:#000;border-radius:16px;">
           <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
-          <div style="font-weight:700;">${item.title}</div>
+          <div style="font-weight:700;">${this.escapeHtml(item.title)}</div>
           <div style="margin-top:0.5rem;color:#64748b;">Modo audio - demostración</div>
           <audio controls style="margin-top:1rem;width:80%;max-width:320px;">
             <source src="${item.previewUrl || ''}" type="audio/mpeg">
@@ -145,11 +152,6 @@ const player = {
     }
   },
 
-  openInYoutube() {
-    if (!this.currentItem || !this.currentItem.youtubeId) return;
-    window.open(`https://www.youtube.com/watch?v=${this.currentItem.youtubeId}`, '_blank');
-  },
-
   toggleFullscreen() {
     const modal = document.getElementById('playerModal');
     const embed = document.getElementById('playerEmbed');
@@ -158,7 +160,6 @@ const player = {
 
     if (!document.fullscreenElement) {
       target.requestFullscreen().catch(() => {
-        // Fallback: maximizar el modal
         modal.classList.add('fullscreen-modal');
       });
     } else {
@@ -168,35 +169,17 @@ const player = {
     }
   },
 
-  updateMiniPlayer(item) {
-    document.getElementById('miniTitle').textContent = item.title;
-    document.getElementById('miniArtist').textContent = `${item.channel} • ${item.category}`;
-    this.updateMiniPlayBtn();
-  },
-
-  togglePlayPause() {
-    if (!this.currentItem) return;
-    if (this.isPlaying && this.audioEl) {
-      this.audioEl.pause();
-    } else {
-      app.showToast('Reproducción simulada - en la versión completa se conectará al stream de audio', 'info');
-    }
-  },
-
   updateMiniPlayBtn() {
     const btn = document.getElementById('miniPlayPause');
-    btn.textContent = this.isPlaying ? '⏸' : '▶';
+    if (btn) btn.textContent = this.isPlaying ? '⏸' : '▶';
   },
 
-  setCurrent(item) {
-    this.currentItem = item;
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   },
 };
-
-let currentItem = null;
-Object.defineProperty(player, 'currentItemProxy', {
-  get() { return currentItem; },
-  set(v) { currentItem = v; player.currentItem = v; },
-});
 
 window.__cpPlayer = player;

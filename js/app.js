@@ -1,15 +1,17 @@
 /**
  * CristianPlay - Aplicación principal
- * Versión 0.01
+ * Versión 0.02
  *
- * Buscador de música cristiana, predicaciones y podcasts.
- * Filtro netamente cristiano. Reproductor libre. Playlists con registro.
+ * Buscador de música cristiana, alabanzas, adoración, predicaciones y podcasts.
+ * Sistema de cola tipo DJ: 1 → 2 → 3, reproducción continua en pie de página.
  */
 
 const app = {
   currentCategory: null,
   currentQuery: '',
   results: [],
+  queue: [],        // cola de reproducción tipo DJ
+  queueIndex: -1,   // índice actual en la cola
 
   init() {
     // Botones de búsqueda
@@ -21,18 +23,110 @@ const app = {
       if (e.key === 'Enter') this.searchFromHero();
     });
 
-    // Mini player
+    // Mini player - controles de cola tipo DJ
+    document.getElementById('miniPrev').addEventListener('click', () => this.prev());
+    document.getElementById('miniPlayPause').addEventListener('click', () => this.togglePlayPause());
+    document.getElementById('miniNext').addEventListener('click', () => this.next());
     document.getElementById('miniExpand').addEventListener('click', () => {
-      if (player.currentItem) player.openFull(player.currentItem);
+      if (this.getCurrentQueueItem()) player.openFull(this.getCurrentQueueItem());
     });
 
-    // Cerrar mini player si se hace clic en expandir (ya está en player.js)
+    // Volumen y progreso del mini player
+    document.getElementById('miniVolume').addEventListener('input', (e) => {
+      if (player.audioEl) player.audioEl.volume = parseFloat(e.target.value);
+    });
+    document.getElementById('miniProgress').addEventListener('input', (e) => {
+      if (player.audioEl && player.audioEl.duration) {
+        player.audioEl.currentTime = (parseFloat(e.target.value) / 100) * player.audioEl.duration;
+      }
+    });
+    player.audioEl.addEventListener('timeupdate', () => {
+      if (player.audioEl && player.audioEl.duration) {
+        const pct = (player.audioEl.currentTime / player.audioEl.duration) * 100;
+        document.getElementById('miniProgress').value = pct;
+      }
+    });
+
+    // Auto-avance al terminar audio (cola tipo DJ)
+    player.audioEl.addEventListener('ended', () => {
+      this.next();
+    });
+
+    // Cerrar modales al hacer clic fuera
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+
     // Inicializar reproductor
     player.init();
 
-    // Render inicial: mostrar todo el contenido cristiano sin filtro de búsqueda
+    // Render inicial: mostrar todo el contenido cristiano
     this.renderResults();
   },
+
+  /* ---------- Cola tipo DJ ---------- */
+
+  getCurrentQueueItem() {
+    return this.queue[this.queueIndex] || null;
+  },
+
+  addToQueue(item) {
+    const exists = this.queue.some(q => q.id === item.id);
+    if (!exists) {
+      this.queue.push(item);
+    }
+  },
+
+  playItem(item) {
+    this.addToQueue(item);
+    this.queueIndex = this.queue.findIndex(q => q.id === item.id);
+    this.playCurrent();
+  },
+
+  addToQueueOnly(item) {
+    this.addToQueue(item);
+    app.showToast('Agregado a la cola', 'success');
+  },
+
+  next() {
+    if (this.queue.length === 0) return;
+    this.queueIndex = (this.queueIndex + 1) % this.queue.length;
+    this.playCurrent();
+  },
+
+  prev() {
+    if (this.queue.length === 0) return;
+    this.queueIndex = (this.queueIndex - 1 + this.queue.length) % this.queue.length;
+    this.playCurrent();
+  },
+
+  playCurrent() {
+    const item = this.getCurrentQueueItem();
+    if (!item) return;
+    player.play(item);
+    this.updateMiniPlayer(item);
+    document.getElementById('miniPlayer').style.display = 'flex';
+  },
+
+  togglePlayPause() {
+    const item = this.getCurrentQueueItem();
+    if (!item) return;
+    if (player.isPlaying && player.audioEl) {
+      player.audioEl.pause();
+    } else {
+      this.playCurrent();
+    }
+  },
+
+  updateMiniPlayer(item) {
+    document.getElementById('miniTitle').textContent = item.title;
+    document.getElementById('miniArtist').textContent = `${item.channel} • ${item.category}`;
+    document.getElementById('miniPlayPause').textContent = player.isPlaying ? '⏸' : '▶';
+  },
+
+  /* ---------- Búsqueda y categorías ---------- */
 
   goHome() {
     this.currentCategory = null;
@@ -73,14 +167,13 @@ const app = {
   },
 
   setActiveChip(category) {
-    // Actualizar cards de categoría en la sección de categorías
-    document.querySelectorAll('#categories .category-card').forEach(card => {
-      const isActive = card.dataset.category === category;
-      card.classList.toggle('chip-active', isActive);
-      if (!isActive) card.classList.remove('chip-active');
-      else card.classList.add('chip-active');
+    document.querySelectorAll('#categories .chip').forEach(chip => {
+      const isActive = chip.dataset.category === category;
+      chip.classList.toggle('chip-active', isActive);
     });
   },
+
+  /* ---------- Renderizado de resultados ---------- */
 
   renderResults() {
     const grid = document.getElementById('resultsGrid');
@@ -88,13 +181,11 @@ const app = {
     const titleEl = document.getElementById('resultsTitle');
     const empty = document.getElementById('emptyState');
 
-    // Obtener resultados simulados filtrados por regla cristiana
     this.results = window.__cpMock.getMockResults(this.currentQuery, this.currentCategory);
 
     grid.innerHTML = '';
     countEl.textContent = `${this.results.length} resultado${this.results.length !== 1 ? 's' : ''}`;
 
-    // Título de la sección
     if (this.currentCategory) {
       const labels = {
         alabanza: 'Alabanzas Cristianas',
@@ -120,6 +211,7 @@ const app = {
     this.results.forEach(item => {
       const card = document.createElement('article');
       card.className = 'card';
+      const isCurrent = this.getCurrentQueueItem() && this.getCurrentQueueItem().id === item.id;
       card.innerHTML = `
         <div class="card-thumb">
           <img src="${item.thumbnail}" alt="${item.title}" loading="lazy" />
@@ -127,6 +219,7 @@ const app = {
           <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.7);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,255,255,0.1);">
             ${item.duration}
           </div>
+          ${isCurrent ? '<div style="position:absolute;top:10px;left:10px;background:var(--primary);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.7rem;font-weight:800;">REPRODUCIENDO</div>' : ''}
         </div>
         <div class="card-body">
           <div class="card-title">${this.escapeHtml(item.title)}</div>
@@ -135,46 +228,29 @@ const app = {
             <button class="btn-play" data-item-id="${item.id}" title="Reproducir">
               ▶
             </button>
-            <button class="btn-add" data-item-id="${item.id}" title="Agregar a playlist">
+            <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola">
               +
             </button>
           </div>
         </div>
       `;
-      // Event listeners directos (evita problemas de comillas en onclick)
+
       const btnPlay = card.querySelector('.btn-play');
       const btnAdd = card.querySelector('.btn-add');
-      btnPlay.addEventListener('click', () => this.playItem(item));
+      btnPlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.playItem(item);
+      });
       btnAdd.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.addToPlaylistQuick(item);
+        this.addToQueueOnly(item);
       });
-      // Doble clic en la card para reproducir
       card.querySelector('.card-body').addEventListener('dblclick', () => this.playItem(item));
       grid.appendChild(card);
     });
   },
 
-  playItem(item) {
-    player.setCurrent(item);
-    player.play(item);
-  },
-
-  addToPlaylistQuick(item) {
-    const user = window.__cpAuth.getUser();
-    if (!user) {
-      app.showToast('Inicia sesión para guardar en playlists', 'warning');
-      auth.toggleAuthModal();
-      return;
-    }
-    const playlists = window.__cpStorage.getPlaylists();
-    if (playlists.length === 0) {
-      window.__cpStorage.addPlaylist('Mis Favoritos');
-    }
-    const defaultPlaylist = window.__cpStorage.getPlaylists()[0];
-    window.__cpStorage.addToPlaylist(defaultPlaylist.id, item);
-    app.showToast('Agregado a tu playlist', 'success');
-  },
+  /* ---------- Auth / Usuario ---------- */
 
   openUserPanel() {
     if (!window.__cpAuth.isLoggedIn()) {
@@ -233,7 +309,7 @@ const app = {
     if (!name || !name.trim()) return;
     window.__cpStorage.addPlaylist(name.trim());
     app.showToast('Playlist creada', 'success');
-    this.openUserPanel(); // refrescar
+    this.openUserPanel();
   },
 
   openPlaylist(playlistId) {
@@ -241,6 +317,7 @@ const app = {
     const p = playlists.find(x => x.id === playlistId);
     if (!p) return;
     const items = p.items;
+    this._playlistFirstItem = items[0] || null;
     let html = `<h3 style="margin-bottom:1rem;">${this.escapeHtml(p.name)}</h3>`;
     if (items.length === 0) {
       html += '<div class="history-item">Esta playlist está vacía</div>';
@@ -285,7 +362,6 @@ const app = {
   },
 };
 
-// Iniciar la app cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
   app.init();
 });
