@@ -67,23 +67,7 @@
     </div>
   </section>
 
-  <!-- Resultados / Videos destacados (inmediatamente abajo de las categorías) -->
-  <section class="content-section" id="contentSection">
-    <div class="content-header">
-      <h2 id="contentTitle">🎵 Videos Cristianos Destacados</h2>
-      <button class="btn btn-outline btn-sm" onclick="app.goHome()">Volver al inicio</button>
-    </div>
-    <div class="content-grid" id="contentGrid">
-      <!-- Aquí se inyectan videos destacados o resultados de búsqueda -->
-    </div>
-    <div id="emptyState" class="empty-state" style="display:none;">
-      <div class="empty-icon">🔍</div>
-      <h3>No se encontraron resultados</h3>
-      <p>Intenta con otro término.</p>
-    </div>
-  </section>
-
-  <!-- Reproductor integrado (video actual) -->
+  <!-- Reproductor integrado (video actual) - ancho completo debajo de categorías -->
   <section class="now-playing" id="nowPlaying">
     <div class="np-header">
       <h3>📺 Reproduciendo ahora</h3>
@@ -99,6 +83,22 @@
       <button class="btn btn-outline" onclick="app.prev()">⏮ Anterior</button>
       <button class="btn btn-primary" onclick="app.togglePlayPause()">▶ Pausa</button>
       <button class="btn btn-outline" onclick="app.next()">Siguiente ⏭</button>
+    </div>
+  </section>
+
+  <!-- Resultados / Videos destacados -->
+  <section class="content-section" id="contentSection">
+    <div class="content-header">
+      <h2 id="contentTitle">🎵 Videos Cristianos Destacados</h2>
+      <button class="btn btn-outline btn-sm" onclick="app.goHome()">Volver al inicio</button>
+    </div>
+    <div class="content-grid" id="contentGrid">
+      <!-- Aquí se inyectan videos destacados o resultados de búsqueda -->
+    </div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <div class="empty-icon">🔍</div>
+      <h3>No se encontraron resultados</h3>
+      <p>Intenta con otro término.</p>
     </div>
   </section>
 
