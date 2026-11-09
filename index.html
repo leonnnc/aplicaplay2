@@ -68,22 +68,26 @@
   <section class="categories" id="categories">
     <h2 class="section-title">Explorar por categoría</h2>
     <div class="category-grid">
-      <button class="chip chip-active" data-category="alabanza" onclick="app.filterByCategory('alabanza', this)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 0 0-6 0"/></svg>
-        Alabanza
-      </button>
-      <button class="chip" data-category="adoracion" onclick="app.filterByCategory('adoracion', this)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10C20 8 18 6 16 6H4c-2 0-4 2-4 4v8c0 2 2 4 4 4h12c2 0 4-2 4-4v-8z"/><path d="M16 10a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"/></svg>
-        Adoración
-      </button>
-      <button class="chip" data-category="predicacion" onclick="app.filterByCategory('predicacion', this)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-        Predicaciones
-      </button>
-      <button class="chip" data-category="podcast" onclick="app.filterByCategory('podcast', this)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3z"/><polyline points="1 9 12 15 23 9"/></svg>
-        Podcasts
-      </button>
+      <div class="category-card chip-active" data-category="alabanza" onclick="app.filterByCategory('alabanza', this)">
+        <div class="category-icon">🎵</div>
+        <div class="category-title">Alabanza</div>
+        <div class="category-desc">Cánticos y alabanzas al Señor</div>
+      </div>
+      <div class="category-card" data-category="adoracion" onclick="app.filterByCategory('adoracion', this)">
+        <div class="category-icon">🙏</div>
+        <div class="category-title">Adoración</div>
+        <div class="category-desc">En espíritu y en verdad</div>
+      </div>
+      <div class="category-card" data-category="predicacion" onclick="app.filterByCategory('predicacion', this)">
+        <div class="category-icon">📖</div>
+        <div class="category-title">Predicaciones</div>
+        <div class="category-desc">Sermones y palabra de Dios</div>
+      </div>
+      <div class="category-card" data-category="podcast" onclick="app.filterByCategory('podcast', this)">
+        <div class="category-icon">🎙️</div>
+        <div class="category-title">Podcasts</div>
+        <div class="category-desc">Predicadores cristianos</div>
+      </div>
     </div>
   </section>
 

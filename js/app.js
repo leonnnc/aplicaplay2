@@ -69,15 +69,16 @@ const app = {
     document.getElementById('heroSearch').value = '';
     this.setActiveChip(el ? category : null);
     this.renderResults();
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
   },
 
   setActiveChip(category) {
-    // Actualizar chips de categoría en la sección de categorías
-    document.querySelectorAll('#categories .chip').forEach(chip => {
-      const isActive = chip.dataset.category === category;
-      chip.classList.toggle('chip-active', isActive);
-      if (!isActive) chip.classList.remove('chip-active');
-      else chip.classList.add('chip-active');
+    // Actualizar cards de categoría en la sección de categorías
+    document.querySelectorAll('#categories .category-card').forEach(card => {
+      const isActive = card.dataset.category === category;
+      card.classList.toggle('chip-active', isActive);
+      if (!isActive) card.classList.remove('chip-active');
+      else card.classList.add('chip-active');
     });
   },
 
