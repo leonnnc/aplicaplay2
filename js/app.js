@@ -2,16 +2,16 @@
  * CristianPlay - Aplicación principal
  * Versión 0.02
  *
- * Buscador de música cristiana, alabanzas, adoración, predicaciones y podcasts.
- * Sistema de cola tipo DJ: selecciona las canciones que quieras escuchar (1, 2, 3…)
- * y se reproducen en secuencia en el mismo entorno, sin modal.
+ * Buscador de videos cristianos: alabanzas, adoración, predicaciones y podcasts.
+ * Reproductor de video integrado justo debajo de las categorías.
+ * Cola tipo DJ: selecciona los videos que quieras ver (1, 2, 3…) en el mismo entorno.
  */
 
 const app = {
   currentCategory: null,
   currentQuery: '',
   results: [],
-  queue: [],        // cola de reproducción tipo DJ
+  queue: [],        // cola de reproducción tipo DJ (solo video)
   queueIndex: -1,   // índice actual en la cola
 
   init() {
@@ -24,11 +24,6 @@ const app = {
       if (e.key === 'Enter') this.searchFromHero();
     });
 
-    // Auto-avance al terminar audio (cola tipo DJ)
-    player.audioEl.addEventListener('ended', () => {
-      this.next();
-    });
-
     // Cerrar modales al hacer clic fuera (auth y usuario)
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
@@ -36,14 +31,11 @@ const app = {
       });
     });
 
-    // Inicializar reproductor
-    player.init();
-
     // Render inicial
     this.renderResults();
   },
 
-  /* ---------- Cola tipo DJ ---------- */
+  /* ---------- Cola tipo DJ (solo video) ---------- */
 
   getCurrentQueueItem() {
     return this.queue[this.queueIndex] || null;
@@ -57,14 +49,14 @@ const app = {
   },
 
   playItem(item) {
-    // Clic en el cuadro: agregar a cola y reproducir inmediatamente
+    // Clic en el cuadro: agregar a cola y reproducir video ahora
     this.addToQueue(item);
     this.queueIndex = this.queue.findIndex(q => q.id === item.id);
     this.playCurrent();
   },
 
   addToQueueOnly(item) {
-    // Botón +: solo agregar a la cola sin reproducir todavía
+    // Botón +: solo agregar a la cola sin cambiar el video actual
     this.addToQueue(item);
     app.showToast('Agregado a la cola', 'success');
     this.renderQueue();
@@ -86,44 +78,33 @@ const app = {
     const item = this.getCurrentQueueItem();
     if (!item) return;
 
-    // Mostrar en reproductor integrado
+    // Mostrar reproductor integrado con el video
     this.renderNowPlaying(item);
     document.getElementById('nowPlaying').classList.add('visible');
 
-    // Reproducir (video o audio)
+    // Llamar al reproductor (solo video embebido)
     player.play(item);
-
-    // Actualizar mini indicadores (títulos solo, no mostrar mini player)
-    document.getElementById('miniTitle').textContent = item.title;
-    document.getElementById('miniArtist').textContent = `${item.channel} • ${item.category}`;
-    document.getElementById('miniPlayPause').textContent = player.isPlaying ? '⏸' : '▶';
 
     this.renderQueue();
   },
 
   togglePlayPause() {
+    // Para video de YouTube embebido, el control de play/pause está dentro del iframe.
+    // Aquí solo marcamos el estado visual si aplica.
     const item = this.getCurrentQueueItem();
     if (!item) return;
-    if (player.isPlaying && player.audioEl) {
-      player.audioEl.pause();
-      document.getElementById('miniPlayPause').textContent = '▶';
-    } else {
-      this.playCurrent();
-    }
+    // No hay audioEl para video; el iframe de YouTube tiene sus propios controles.
+    app.showToast('Usa los controles del video para pausar/reproducir', 'info');
   },
 
   clearQueue() {
     this.queue = [];
     this.queueIndex = -1;
-    player.audioEl.pause();
-    player.audioEl.src = '';
-    player.isPlaying = false;
-    document.getElementById('miniPlayPause').textContent = '▶';
     document.getElementById('nowPlaying').classList.remove('visible');
     document.getElementById('npMedia').innerHTML = `
       <div class="np-empty">
-        <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
-        <p>Selecciona una canción para comenzar a reproducir</p>
+        <div style="font-size:3rem;margin-bottom:1rem;">📺</div>
+        <p>Selecciona un video para comenzar a reproducir</p>
       </div>
     `;
     this.renderQueue();
@@ -141,8 +122,8 @@ const app = {
       document.getElementById('nowPlaying').classList.remove('visible');
       document.getElementById('npMedia').innerHTML = `
         <div class="np-empty">
-          <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
-          <p>Selecciona una canción para comenzar a reproducir</p>
+          <div style="font-size:3rem;margin-bottom:1rem;">📺</div>
+          <p>Selecciona un video para comenzar a reproducir</p>
         </div>
       `;
     }
@@ -154,7 +135,7 @@ const app = {
     list.innerHTML = '';
 
     if (this.queue.length === 0) {
-      list.innerHTML = '<div class="queue-empty">La cola está vacía. Agrega canciones presionando <strong>+</strong> en cualquier cuadro.</div>';
+      list.innerHTML = '<div class="queue-empty">La cola está vacía. Presiona <strong>+</strong> en cualquier video para agregarlo.</div>';
       return;
     }
 
@@ -182,30 +163,17 @@ const app = {
 
   renderNowPlaying(item) {
     const media = document.getElementById('npMedia');
-    if (item.type === 'video' && item.youtubeId) {
-      media.innerHTML = `
-        <iframe
-          width="560" height="315"
-          src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1"
-          title="${item.title}"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      `;
-    } else {
-      media.innerHTML = `
-        <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;background:#000;border-radius:12px;">
-          <div style="font-size:3rem;margin-bottom:1rem;">🎵</div>
-          <div style="font-weight:700;">${this.escapeHtml(item.title)}</div>
-          <div style="margin-top:0.5rem;color:#64748b;">Modo audio - demostración</div>
-          <audio controls style="margin-top:1rem;width:80%;max-width:320px;" onended="app.next()">
-            <source src="${item.previewUrl || ''}" type="audio/mpeg">
-            Tu navegador no soporta audio.
-          </audio>
-        </div>
-      `;
-    }
+    // Solo video de YouTube embebido
+    media.innerHTML = `
+      <iframe
+        width="560" height="315"
+        src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1"
+        title="${item.title}"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    `;
   },
 
   /* ---------- Búsqueda y categorías ---------- */
@@ -298,7 +266,7 @@ const app = {
       card.innerHTML = `
         <div class="card-thumb">
           <img src="${item.thumbnail}" alt="${item.title}" loading="lazy" />
-          <div class="card-badge">${item.type === 'video' ? 'VIDEO' : 'AUDIO'}</div>
+          <div class="card-badge">VIDEO</div>
           <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.7);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,255,255,0.1);">
             ${item.duration}
           </div>
@@ -308,7 +276,7 @@ const app = {
           <div class="card-title">${this.escapeHtml(item.title)}</div>
           <div class="card-channel">${this.escapeHtml(item.channel)}</div>
           <div class="card-actions">
-            <button class="btn-play" data-item-id="${item.id}" title="Reproducir ahora">
+            <button class="btn-play" data-item-id="${item.id}" title="Reproducir video ahora">
               ▶
             </button>
             <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola">
@@ -318,9 +286,8 @@ const app = {
         </div>
       `;
 
-      // Todo el cuadro es clickeable para reproducir
+      // Todo el cuadro es clickeable para reproducir video
       card.addEventListener('click', (e) => {
-        // Si el clic fue en los botones de acción, no disparar doble acción
         if (e.target.closest('.btn-play') || e.target.closest('.btn-add')) return;
         this.playItem(item);
       });

@@ -1,6 +1,6 @@
 /**
  * CristianPlay - Datos simulados (mock) de YouTube
- * Versión 0.01
+ * Versión 0.02
  *
  * NOTA: En producción reemplaza esto por la YouTube Data API v3.
  * Necesitarás una API Key de Google Cloud Console y habilitar
@@ -71,7 +71,7 @@ const MOCK_VIDEOS = [
     duration: '1:10:00',
     thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
     youtubeId: 'dQw4w9WgXcQ',
-    type: 'audio',
+    type: 'video',
     description: 'Colección de himnos cristianos tradicionales para escuchar y adorar.',
   },
   {
@@ -93,7 +93,7 @@ const MOCK_VIDEOS = [
     duration: '52:30',
     thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
     youtubeId: 'dQw4w9WgXcQ',
-    type: 'audio',
+    type: 'video',
     description: 'Episodio del podcast cristiano hablando de fe y perseverancia.',
   },
   {
@@ -115,7 +115,7 @@ const MOCK_VIDEOS = [
     duration: '1:20:00',
     thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
     youtubeId: 'dQw4w9WgXcQ',
-    type: 'audio',
+    type: 'video',
     description: 'Música instrumental cristiana para orar y meditar en la Palabra.',
   },
   {
@@ -137,7 +137,7 @@ const MOCK_VIDEOS = [
     duration: '41:15',
     thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg',
     youtubeId: 'dQw4w9WgXcQ',
-    type: 'audio',
+    type: 'video',
     description: 'Testimonios reales de predicadores cristianos alrededor del mundo.',
   },
 ];
