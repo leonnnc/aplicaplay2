@@ -57,8 +57,7 @@ input { font-family: inherit; background: transparent; color: var(--text); borde
 .nav-btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border: none; }
 
 /* Búsqueda en navbar */
-.nav-search { display: none; align-items: center; gap: 0.5rem; flex: 1; max-width: 420px; margin: 0 1rem; }
-.nav-search.active { display: flex; }
+.nav-search { display: flex; align-items: center; gap: 0.5rem; flex: 1; max-width: 420px; margin: 0 1rem; }
 .search-box { position: relative; flex: 1; }
 .search-box input {
   width: 100%;
