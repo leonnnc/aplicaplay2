@@ -1,10 +1,11 @@
 /**
  * CristianPlay - Aplicación principal
- * Versión 0.03
+ * Versión 0.04
  *
  * Buscador de videos cristianos: alabanzas, adoración, predicaciones y podcasts.
- * Reproductor de video integrado justo debajo de las categorías.
- * Cola tipo DJ: selecciona los videos que quieras ver (1, 2, 3…) en el mismo entorno.
+ * Reproductor de video integrado.
+ * Cola tipo DJ: agregar sin interrumpir el video actual.
+ * Modo música: reproducción continua tipo radio.
  * Panel de administración oculto: estadísticas, usuarios y ranking (solo admin).
  */
 
@@ -12,8 +13,10 @@ const app = {
   currentCategory: null,
   currentQuery: '',
   results: [],
-  queue: [],        // cola de reproducción tipo DJ (solo video)
+  queue: [],        // cola de reproducción tipo DJ
   queueIndex: -1,   // índice actual en la cola
+  isMusicMode: false, // modo música (audio continuo)
+  currentPlayingItem: null, // item que se está reproduciendo AHORA
 
   init() {
     // Botones de búsqueda
@@ -25,7 +28,13 @@ const app = {
       if (e.key === 'Enter') this.searchFromHero();
     });
 
-    // Cerrar modales al hacer clic fuera (auth, usuario y admin)
+    // Botón modo música
+    const musicBtn = document.getElementById('btnMusicMode');
+    if (musicBtn) {
+      musicBtn.addEventListener('click', () => this.toggleMusicMode());
+    }
+
+    // Cerrar modales al hacer clic fuera
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('open');
@@ -39,6 +48,7 @@ const app = {
 
     // Render inicial
     this.renderResults();
+    this.updateMusicModeUI();
   },
 
   /* ---------- Panel de Administración ---------- */
@@ -66,16 +76,12 @@ const app = {
   },
 
   switchAdminTab(tab) {
-    // Actualizar pestañas
     document.querySelectorAll('.admin-tab').forEach(t => {
       t.classList.toggle('active', t.dataset.tab === tab);
     });
-    // Mostrar panel correspondiente
     document.querySelectorAll('.admin-panel').forEach(p => {
       p.classList.toggle('hidden', p.id !== `admin${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
     });
-
-    // Renderizar contenido según la pestaña
     if (tab === 'stats') this.renderAdminStats();
     if (tab === 'users') this.renderAdminUsers();
     if (tab === 'ranking') this.renderAdminRanking();
@@ -91,7 +97,6 @@ const app = {
     document.getElementById('statTotalVideos').textContent = stats.totalVideosAdded || 0;
     document.getElementById('statTotalPlaylists').textContent = playlists.length;
 
-    // Actividad reciente
     const activity = document.getElementById('adminRecentActivity');
     if (history.length === 0) {
       activity.innerHTML = '<div class="activity-item">Sin actividad registrada</div>';
@@ -115,7 +120,6 @@ const app = {
       return;
     }
 
-    // En localStorage solo hay un usuario a la vez (simulación), mostramos el actual
     list.innerHTML = `
       <div class="user-item ${isAdminUser ? 'admin-user' : ''}">
         <div class="user-info">
@@ -157,7 +161,34 @@ const app = {
     `).join('');
   },
 
-  /* ---------- Cola tipo DJ ---------- */
+  /* ---------- Modo Música ---------- */
+
+  toggleMusicMode() {
+    this.isMusicMode = !this.isMusicMode;
+    this.updateMusicModeUI();
+    app.showToast(
+      this.isMusicMode ? 'Modo música activado: reproducción continua' : 'Modo música desactivado',
+      this.isMusicMode ? 'success' : 'info'
+    );
+  },
+
+  updateMusicModeUI() {
+    const btn = document.getElementById('btnMusicMode');
+    const indicator = document.getElementById('musicModeIndicator');
+    if (!btn) return;
+
+    if (this.isMusicMode) {
+      btn.classList.add('active');
+      btn.textContent = '🎵 Modo Música: ON';
+      if (indicator) indicator.textContent = '🎵 MÚSICA EN VIVO';
+    } else {
+      btn.classList.remove('active');
+      btn.textContent = '🎵 Modo Música';
+      if (indicator) indicator.textContent = '';
+    }
+  },
+
+  /* ---------- Cola tipo DJ (sin interrumpir) ---------- */
 
   getCurrentQueueItem() {
     return this.queue[this.queueIndex] || null;
@@ -171,18 +202,19 @@ const app = {
     }
   },
 
-  playItem(item) {
-    // Clic en el cuadro: agregar a cola y reproducir video ahora
+  // Reproducir AHORA (sí cambia el video actual)
+  playNow(item) {
     this.addToQueue(item);
     this.queueIndex = this.queue.findIndex(q => q.id === item.id);
     this.playCurrent();
+    app.showToast(`Reproduciendo: ${item.title}`, 'success');
   },
 
+  // Agregar a la cola SIN interrumpir el actual
   addToQueueOnly(item) {
-    // Botón +: solo agregar a la cola sin cambiar el video actual
     this.addToQueue(item);
-    app.showToast('Agregado a la cola', 'success');
     this.renderQueue();
+    app.showToast('Agregado a la cola (no interrumpe el actual)', 'success');
   },
 
   next() {
@@ -201,29 +233,26 @@ const app = {
     const item = this.getCurrentQueueItem();
     if (!item) return;
 
-    // Mostrar reproductor integrado con el video
+    this.currentPlayingItem = item;
     this.renderNowPlaying(item);
     document.getElementById('nowPlaying').classList.add('visible');
 
-    // Llamar al reproductor (solo video embebido)
     player.play(item);
 
-    // Registrar en estadísticas y ranking
     window.__cpStorage.incrementPlays();
     window.__cpStorage.addToRanking(item);
     window.__cpStorage.addHistory(item);
 
-    // Si es admin, actualizar stats del panel si está abierto
     if (auth.isAdmin() && document.getElementById('adminModal').classList.contains('open')) {
       this.renderAdminStats();
       this.renderAdminRanking();
     }
 
     this.renderQueue();
+    this.updateMusicModeUI();
   },
 
   togglePlayPause() {
-    // Para video de YouTube embebido, el control de play/pause está dentro del iframe.
     const item = this.getCurrentQueueItem();
     if (!item) return;
     app.showToast('Usa los controles del video para pausar/reproducir', 'info');
@@ -232,6 +261,7 @@ const app = {
   clearQueue() {
     this.queue = [];
     this.queueIndex = -1;
+    this.currentPlayingItem = null;
     document.getElementById('nowPlaying').classList.remove('visible');
     document.getElementById('npMedia').innerHTML = `
       <div class="np-empty">
@@ -251,6 +281,7 @@ const app = {
     if (this.queueIndex >= 0) {
       this.playCurrent();
     } else {
+      this.currentPlayingItem = null;
       document.getElementById('nowPlaying').classList.remove('visible');
       document.getElementById('npMedia').innerHTML = `
         <div class="np-empty">
@@ -286,7 +317,7 @@ const app = {
           <div class="queue-channel">${this.escapeHtml(item.channel)} • ${item.category}</div>
         </div>
         <div class="queue-item-actions">
-          <button class="btn btn-outline" onclick="event.stopPropagation(); app.removeFromQueue(${idx})" title="Quitar">✕</button>
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); app.removeFromQueue(${idx})" title="Quitar">✕</button>
         </div>
       `;
       list.appendChild(div);
@@ -295,22 +326,44 @@ const app = {
 
   renderNowPlaying(item) {
     const media = document.getElementById('npMedia');
-    // Solo video de YouTube embebido con mínimas distracciones
-    media.innerHTML = `
-      <div class="yt-wrapper">
-        <iframe
-          width="560" height="315"
-          src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1&fs=1&cc_load_policy=0&iv_load_policy=3"
-          title="${item.title}"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          allowfullscreen
-        ></iframe>
-        <div class="yt-note">
-          <small>Reproducido desde YouTube. Los anuncios (si los hay) son gestionados por YouTube, no por CristianPlay.</small>
+    if (this.isMusicMode) {
+      // Modo música: mostrar portada grande y controles de audio
+      media.innerHTML = `
+        <div class="music-player">
+          <div class="music-cover" style="background-image:url('${item.thumbnail}')"></div>
+          <div class="music-info">
+            <div class="music-title">${this.escapeHtml(item.title)}</div>
+            <div class="music-channel">${this.escapeHtml(item.channel)}</div>
+            <div class="music-category">${item.category}</div>
+          </div>
+          <div class="music-controls">
+            <button class="btn btn-outline" onclick="app.prev()">⏮ Anterior</button>
+            <button class="btn btn-primary" onclick="app.togglePlayPause()">▶ Pausa</button>
+            <button class="btn btn-outline" onclick="app.next()">Siguiente ⏭</button>
+          </div>
+          <div class="music-note">
+            <small>🎵 Modo música: reproducción continua. El siguiente inicia automáticamente al terminar.</small>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    } else {
+      // Modo video: iframe de YouTube con mínimas distracciones
+      media.innerHTML = `
+        <div class="yt-wrapper">
+          <iframe
+            width="560" height="315"
+            src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1&fs=1&cc_load_policy=0&iv_load_policy=3"
+            title="${item.title}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowfullscreen
+          ></iframe>
+          <div class="yt-note">
+            <small>Reproducido desde YouTube. Los anuncios (si los hay) son gestionados por YouTube, no por CristianPlay.</small>
+          </div>
+        </div>
+      `;
+    }
   },
 
   /* ---------- Búsqueda y categorías ---------- */
@@ -407,33 +460,33 @@ const app = {
           <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.7);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,255,255,0.1);">
             ${item.duration}
           </div>
-          ${isCurrent ? '<div style="position:absolute;top:10px;left:10px;background:var(--primary);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.7rem;font-weight:800;">REPRODUCIENDO</div>' : ''}
+          ${isCurrent ? '<div style="position:absolute;top:10px;left:10px;background:var(--primary);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.7rem;font-weight:800;">EN VIVO</div>' : ''}
         </div>
         <div class="card-body">
           <div class="card-title">${this.escapeHtml(item.title)}</div>
           <div class="card-channel">${this.escapeHtml(item.channel)}</div>
           <div class="card-actions">
-            <button class="btn-play" data-item-id="${item.id}" title="Reproducir video ahora">
-              ▶
+            <button class="btn-play" data-item-id="${item.id}" title="Reproducir AHORA (cambia el actual)">
+              ▶ Ahora
             </button>
-            <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola">
+            <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola (no interrumpe)">
               +
             </button>
           </div>
         </div>
       `;
 
-      // Todo el cuadro es clickeable para reproducir video
+      // Todo el cuadro es clickeable para agregar a cola (sin interrumpir)
       card.addEventListener('click', (e) => {
         if (e.target.closest('.btn-play') || e.target.closest('.btn-add')) return;
-        this.playItem(item);
+        this.addToQueueOnly(item);
       });
 
       const btnPlay = card.querySelector('.btn-play');
       const btnAdd = card.querySelector('.btn-add');
       btnPlay.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.playItem(item);
+        this.playNow(item);
       });
       btnAdd.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -486,7 +539,7 @@ const app = {
         const div = document.createElement('div');
         div.className = 'history-item';
         div.textContent = h.title;
-        div.onclick = () => this.playItem(h);
+        div.onclick = () => this.playNow(h);
         history.appendChild(div);
       });
     }
@@ -525,13 +578,31 @@ const app = {
         `;
       });
     }
-    html += `<button class="btn btn-primary btn-block mt-3" onclick="app.closeUserPanel(); app.playItemFromPlaylist()">Reproducir primera</button>`;
+    html += `<button class="btn btn-primary btn-block mt-3" onclick="app.closeUserPanel(); app.playNowFromPlaylist()">Reproducir primera AHORA</button>`;
+    html += `<button class="btn btn-outline btn-block mt-2" onclick="app.closeUserPanel(); app.addPlaylistToQueue()">Agregar toda a la cola</button>`;
     document.getElementById('playlistsList').innerHTML = html;
   },
 
-  playItemFromPlaylist() {
+  playNowFromPlaylist() {
     if (this._playlistFirstItem) {
-      this.playItem(this._playlistFirstItem);
+      this.playNow(this._playlistFirstItem);
+    }
+  },
+
+  addPlaylistToQueue() {
+    const playlists = window.__cpStorage.getPlaylists();
+    const p = playlists.find(x => x.id === this._currentPlaylistId);
+    if (!p) return;
+    p.items.forEach(item => this.addToQueue(item));
+    this.renderQueue();
+    app.showToast(`${p.items.length} videos agregados a la cola`, 'success');
+    this.closeUserPanel();
+  },
+
+  playItemFromPlaylist() {
+    // Mantener compatibilidad
+    if (this._playlistFirstItem) {
+      this.playNow(this._playlistFirstItem);
     }
   },
 
