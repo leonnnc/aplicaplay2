@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CristianPlay | Música Cristiana, Predicaciones y Podcasts</title>
-  <meta name="description" content="Busca alabanzas, adoración, predicaciones y podcasts cristianos. Reproductor de video integrado y cola tipo DJ." />
+  <title>CristianPlay | Música Cristiana</title>
+  <meta name="description" content="Busca alabanzas, adoración, predicaciones y podcasts cristianos." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
@@ -14,26 +14,16 @@
 
   <!-- Barra de versión -->
   <div class="version-bar">
-    <span class="version-badge">v0.02</span>
-    <span class="version-text">Solo video • Música Cristiana</span>
+    <span class="version-badge">v0.06</span>
+    <span class="version-text">Música Cristiana • Modo DJ</span>
   </div>
 
-  <!-- Navegación -->
+  <!-- Navegación simple -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <div class="nav-logo" onclick="app.goHome()">
         <div class="logo-icon">▶</div>
         <div class="logo-text">Cristian<span>Play</span></div>
-      </div>
-
-      <div class="nav-search">
-        <div class="search-box">
-          <input type="text" id="searchInput" placeholder="Busca alabanzas, adoración, predicaciones, podcasts cristianos..." autocomplete="off" />
-          <button class="search-btn" id="searchBtn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          </button>
-        </div>
-        <div class="chip-group" id="chipGroup"></div>
       </div>
 
       <div class="nav-actions">
@@ -46,52 +36,40 @@
           <span id="userBtnText">Mi cuenta</span>
         </button>
         <button class="nav-btn nav-btn-primary" onclick="app.toggleAdminPanel()" id="adminBtn" style="display:none;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15 18H6z"/><circle cx="12" cy="10" r="3"/></svg>
           Admin
-        </button>
-        <button class="nav-btn nav-btn-primary" onclick="app.toggleMusicMode()" id="btnMusicMode" style="display:flex;">
-          🎵 Modo Música
-        </button>
-        <button class="nav-btn nav-btn-primary" onclick="app.toggleShuffle()" id="btnShuffle" style="display:flex;">
-          🔀 Aleatorio
         </button>
       </div>
     </div>
   </nav>
 
-  <!-- Hero -->
+  <!-- Bienvenida + Búsqueda única (arriba) -->
   <header class="hero">
     <div class="hero-content">
       <h1 class="hero-title">
-        Alabanzas y <span class="gradient-text">Adoración</span> Cristiana
+        Bienvenido a <span class="gradient-text">CristianPlay</span>
       </h1>
-      <p class="hero-subtitle">Encuentra videos cristianos. Reproduce en el mismo entorno. Crea tu cola tipo DJ y sigue viendo más videos.</p>
+      <p class="hero-subtitle">Busca alabanzas, adoración, predicaciones y podcasts cristianos. Agrega videos a tu lista y ellos esperan su turno sin interrumpir lo que suena.</p>
       <div class="hero-search">
-        <input type="text" id="heroSearch" placeholder="¿Qué video deseas ver hoy?" />
-        <button class="btn btn-primary btn-lg" onclick="app.searchFromHero()">Buscar</button>
+        <input type="text" id="searchInput" placeholder="Busca alabanzas, adoración, predicaciones, podcasts cristianos..." autocomplete="off" />
+        <button class="btn btn-primary btn-lg" id="searchBtn">Buscar</button>
       </div>
     </div>
     <div class="hero-bg"></div>
   </header>
 
-  <!-- Categorías rápidas -->
-  <section class="categories" id="categories">
-    <h2 class="section-title">Explorar por categoría</h2>
-    <div class="category-grid">
-      <button class="chip chip-active" data-category="alabanza" onclick="app.filterByCategory('alabanza', this)">Alabanza</button>
-      <button class="chip" data-category="adoracion" onclick="app.filterByCategory('adoracion', this)">Adoración</button>
-      <button class="chip" data-category="predicacion" onclick="app.filterByCategory('predicacion', this)">Predicaciones</button>
-      <button class="chip" data-category="podcast" onclick="app.filterByCategory('podcast', this)">Podcasts</button>
+  <!-- Videos destacados (mejores videos cristianos) -->
+  <section class="featured-section" id="featuredSection">
+    <h2 class="section-title">🎵 Videos Cristianos Destacados</h2>
+    <div class="featured-grid" id="featuredGrid">
+      <!-- Los videos destacados se inyectan aquí -->
     </div>
   </section>
 
-  <!-- Reproductor de video integrado (justo debajo de las categorías) -->
+  <!-- Reproductor integrado (video actual) -->
   <section class="now-playing" id="nowPlaying">
     <div class="np-header">
       <h3>📺 Reproduciendo ahora</h3>
-      <span id="musicModeIndicator" class="music-indicator"></span>
-      <span id="shuffleIndicator" class="music-indicator"></span>
-      <button class="btn btn-outline btn-sm" onclick="app.clearQueue()">Limpiar cola</button>
+      <button class="btn btn-outline btn-sm" onclick="app.clearQueue()">Limpiar lista</button>
     </div>
     <div class="np-media" id="npMedia">
       <div class="np-empty">
@@ -106,29 +84,20 @@
     </div>
   </section>
 
-  <!-- Cola tipo DJ -->
+  <!-- Lista de espera (cola DJ) abajo -->
   <section class="queue-section" id="queueSection">
-    <h3>📋 Cola de reproducción (DJ)</h3>
+    <h3>📋 Lista de espera (tu cola DJ)</h3>
     <div class="queue-list" id="queueList">
-      <div class="queue-empty">La cola está vacía. Presiona <strong>+</strong> en cualquier video para agregarlo.</div>
+      <div class="queue-empty">La lista está vacía. Presiona <strong>+</strong> en cualquier video para agregarlo.</div>
     </div>
   </section>
 
-  <!-- Artistas Similares -->
-  <section class="similar-section" id="similarArtistsSection" style="display:none;">
-    <div class="similar-header">
-      <h3>🔗 Artistas Similares</h3>
-      <span class="similar-current-artist" id="currentSimilarArtist"></span>
-      <button class="btn btn-outline btn-sm" onclick="document.getElementById('similarArtistsSection').style.display='none'; app.similarArtistsVisible=false;">Cerrar</button>
-    </div>
-    <div class="similar-list" id="similarArtistsList"></div>
-  </section>
-
-  <!-- Resultados -->
-  <section class="results-section" id="resultsSection">
+  <!-- Resultados de búsqueda -->
+  <section class="results-section" id="resultsSection" style="display:none;">
     <div class="results-header">
       <h2 id="resultsTitle">Resultados</h2>
       <span class="results-count" id="resultsCount">0 encontrados</span>
+      <button class="btn btn-outline btn-sm" onclick="app.goHome()">Volver al inicio</button>
     </div>
     <div class="results-grid" id="resultsGrid">
       <!-- Cards inyectadas por JS -->
@@ -136,7 +105,7 @@
     <div id="emptyState" class="empty-state" style="display:none;">
       <div class="empty-icon">🔍</div>
       <h3>No se encontraron resultados</h3>
-      <p>Intenta con otro término o categoría. Recuerda que este sistema filtra solo contenido cristiano.</p>
+      <p>Intenta con otro término.</p>
     </div>
   </section>
 
@@ -148,168 +117,68 @@
         <button class="auth-tab active" data-tab="login" onclick="auth.switchTab('login')">Iniciar sesión</button>
         <button class="auth-tab" data-tab="register" onclick="auth.switchTab('register')">Crear cuenta</button>
       </div>
-
       <form id="loginForm" class="auth-form" onsubmit="auth.handleLogin(event)">
-        <div class="form-group">
-          <label>Correo electrónico</label>
-          <input type="email" placeholder="tucorreo@ejemplo.com" required />
-        </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input type="password" placeholder="••••••••" required />
-        </div>
+        <div class="form-group"><label>Correo electrónico</label><input type="email" placeholder="tucorreo@ejemplo.com" required /></div>
+        <div class="form-group"><label>Contraseña</label><input type="password" placeholder="••••••••" required /></div>
         <button type="submit" class="btn btn-primary btn-block">Entrar</button>
         <p class="auth-footer">¿No tienes cuenta? <button type="button" class="auth-link" onclick="auth.switchTab('register')">Regístrate aquí</button></p>
       </form>
-
       <form id="registerForm" class="auth-form hidden" onsubmit="auth.handleRegister(event)">
-        <div class="form-group">
-          <label>Nombre completo</label>
-          <input type="text" placeholder="Juan Pérez" required />
-        </div>
-        <div class="form-group">
-          <label>Correo electrónico</label>
-          <input type="email" placeholder="tucorreo@ejemplo.com" required />
-        </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input type="password" placeholder="••••••••" required />
-        </div>
-        <div class="form-group">
-          <label>Confirmar contraseña</label>
-          <input type="password" placeholder="••••••••" required />
-        </div>
+        <div class="form-group"><label>Nombre completo</label><input type="text" placeholder="Juan Pérez" required /></div>
+        <div class="form-group"><label>Correo electrónico</label><input type="email" placeholder="tucorreo@ejemplo.com" required /></div>
+        <div class="form-group"><label>Contraseña</label><input type="password" placeholder="••••••••" required /></div>
+        <div class="form-group"><label>Confirmar contraseña</label><input type="password" placeholder="••••••••" required /></div>
         <button type="submit" class="btn btn-primary btn-block">Crear cuenta</button>
         <p class="auth-footer">¿Ya tienes cuenta? <button type="button" class="auth-link" onclick="auth.switchTab('login')">Inicia sesión</button></p>
       </form>
     </div>
   </div>
 
-  <!-- Modal Usuario / Panel -->
+  <!-- Modal Usuario -->
   <div class="modal-overlay" id="userModal">
     <div class="modal user-modal">
       <button class="modal-close" onclick="app.closeUserPanel()">&times;</button>
       <div class="user-header">
         <div class="user-avatar" id="userAvatar">U</div>
-        <div class="user-info">
-          <h3 id="userName">Usuario</h3>
-          <p id="userEmail">correo@ejemplo.com</p>
-        </div>
+        <div class="user-info"><h3 id="userName">Usuario</h3><p id="userEmail">correo@ejemplo.com</p></div>
         <button class="btn btn-outline btn-sm" onclick="auth.logout()">Cerrar sesión</button>
       </div>
-
-      <div class="user-section">
-        <h4>Mis Playlists</h4>
-        <div class="playlists-list" id="playlistsList">
-          <div class="playlist-item">
-            <div class="playlist-info">
-              <strong>Mis Alabanzas Favoritas</strong>
-              <span>12 canciones</span>
-            </div>
-            <button class="btn btn-outline btn-sm">Ver</button>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-block mt-3" onclick="app.createPlaylist()">+ Nueva playlist</button>
-      </div>
-
-      <div class="user-section">
-        <h4>Historial reciente</h4>
-        <div class="history-list" id="historyList">
-          <div class="history-item">No hay historial todavía</div>
-        </div>
-      </div>
+      <div class="user-section"><h4>Mis Playlists</h4><div class="playlists-list" id="playlistsList"></div><button class="btn btn-primary btn-block mt-3" onclick="app.createPlaylist()">+ Nueva playlist</button></div>
+      <div class="user-section"><h4>Historial reciente</h4><div class="history-list" id="historyList"></div></div>
     </div>
   </div>
 
-  <!-- Panel de Administración (oculto, solo admin) -->
+  <!-- Panel Admin -->
   <div class="modal-overlay" id="adminModal">
     <div class="modal admin-modal" style="max-width: 900px; max-height: 90vh;">
-      <div class="admin-header">
-        <button class="modal-close" onclick="app.closeAdminPanel()">&times;</button>
-        <h3>🔐 Panel de Administración</h3>
-        <span class="admin-badge">SOLO ADMINISTRADOR</span>
-      </div>
+      <div class="admin-header"><button class="modal-close" onclick="app.closeAdminPanel()">&times;</button><h3>🔐 Panel de Administración</h3><span class="admin-badge">SOLO ADMINISTRADOR</span></div>
       <div class="admin-tabs">
         <button class="admin-tab active" data-tab="stats" onclick="app.switchAdminTab('stats')">Estadísticas</button>
         <button class="admin-tab" data-tab="users" onclick="app.switchAdminTab('users')">Usuarios</button>
         <button class="admin-tab" data-tab="ranking" onclick="app.switchAdminTab('ranking')">Ranking</button>
       </div>
-
-      <!-- Estadísticas -->
       <div class="admin-panel active" id="adminStats">
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-number" id="statTotalUsers">0</div>
-            <div class="stat-label">Usuarios registrados</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="statTotalPlays">0</div>
-            <div class="stat-label">Reproducciones totales</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="statTotalVideos">0</div>
-            <div class="stat-label">Videos agregados a cola</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number" id="statTotalPlaylists">0</div>
-            <div class="stat-label">Playlists creadas</div>
-          </div>
+          <div class="stat-card"><div class="stat-number" id="statTotalUsers">0</div><div class="stat-label">Usuarios registrados</div></div>
+          <div class="stat-card"><div class="stat-number" id="statTotalPlays">0</div><div class="stat-label">Reproducciones totales</div></div>
+          <div class="stat-card"><div class="stat-number" id="statTotalVideos">0</div><div class="stat-label">Videos agregados</div></div>
+          <div class="stat-card"><div class="stat-number" id="statTotalPlaylists">0</div><div class="stat-label">Playlists creadas</div></div>
         </div>
-        <div class="admin-section">
-          <h4>Actividad reciente</h4>
-          <div id="adminRecentActivity" class="activity-list">
-            <div class="activity-item">Sin actividad registrada</div>
-          </div>
-        </div>
+        <div class="admin-section"><h4>Actividad reciente</h4><div id="adminRecentActivity" class="activity-list"></div></div>
       </div>
-
-      <!-- Usuarios -->
-      <div class="admin-panel hidden" id="adminUsers">
-        <div class="admin-section">
-          <h4>Usuarios registrados</h4>
-          <div id="adminUsersList" class="users-list">
-            <div class="user-item">
-              <div class="user-info">
-                <strong>Cargando...</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Ranking -->
-      <div class="admin-panel hidden" id="adminRanking">
-        <div class="admin-section">
-          <h4>🏆 Ranking de videos más reproducidos</h4>
-          <div id="adminRankingList" class="ranking-list">
-            <div class="ranking-item">
-              <div class="ranking-position">-</div>
-              <div class="ranking-info">
-                <strong>Sin datos todavía</strong>
-                <span>No se han reproducido videos</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="admin-panel hidden" id="adminUsers"><div class="admin-section"><h4>Usuarios registrados</h4><div id="adminUsersList"></div></div></div>
+      <div class="admin-panel hidden" id="adminRanking"><div class="admin-section"><h4>🏆 Ranking de videos más reproducidos</h4><div id="adminRankingList"></div></div></div>
     </div>
   </div>
 
   <!-- Toast -->
-  <div class="toast" id="toast">
-    <div class="toast-message" id="toastMessage"></div>
-  </div>
+  <div class="toast" id="toast"><div class="toast-message" id="toastMessage"></div></div>
 
   <footer>
     <div class="footer-content">
-      <div class="footer-brand">
-        <div class="logo-icon">▶</div>
-        <div class="logo-text">Cristian<span>Play</span></div>
-      </div>
-      <p class="footer-text">Sistema de búsqueda netamente cristiano. Versión <span id="footerVersion">0.02</span>. Solo video para alabanzas, adoración, predicaciones y podcasts del evangelio.</p>
-      <div class="footer-disclaimer">
-        <small>Los resultados provienen de fuentes públicas de YouTube. CristianPlay no aloja contenido propio. Úsalo responsablemente.</small>
-      </div>
+      <div class="footer-brand"><div class="logo-icon">▶</div><div class="logo-text">Cristian<span>Play</span></div></div>
+      <p class="footer-text">Sistema de búsqueda netamente cristiano. Versión <span id="footerVersion">0.06</span>.</p>
+      <div class="footer-disclaimer"><small>Los resultados provienen de fuentes públicas de YouTube. CristianPlay no aloja contenido propio.</small></div>
     </div>
   </footer>
 

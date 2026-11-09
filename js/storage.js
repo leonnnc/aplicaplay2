@@ -1,8 +1,7 @@
 /**
- * CristianPlay - Capa de almacenamiento local (localStorage)
- * Versión 0.02
+ * CristianPlay - Almacenamiento local (localStorage)
+ * Versión 0.06
  */
-
 const STORAGE_KEYS = {
   USER: 'cp_user_v1',
   PLAYLISTS: 'cp_playlists_v1',
@@ -10,188 +9,49 @@ const STORAGE_KEYS = {
   STATS: 'cp_stats_v1',
   ADMIN_EMAIL: 'cp_admin_email_v1',
 };
-
-// Email del administrador (cambia este valor por el que desees)
 const ADMIN_EMAIL = 'admin@cristianplay.com';
 
 const storage = {
-  // --- Usuario ---
-  getUser() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.USER);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      console.error('Error reading user from storage', e);
-      return null;
-    }
-  },
-  setUser(user) {
-    try {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    } catch (e) {
-      console.error('Error saving user to storage', e);
-    }
-  },
-  clearUser() {
-    try {
-      localStorage.removeItem(STORAGE_KEYS.USER);
-    } catch (e) {
-      console.error('Error clearing user from storage', e);
-    }
-  },
+  getUser() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null'); } catch(e){ return null; } },
+  setUser(u) { try { localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(u)); } catch(e){} },
+  clearUser() { try { localStorage.removeItem(STORAGE_KEYS.USER); } catch(e){} },
 
-  // --- Playlists ---
-  getPlaylists() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.PLAYLISTS);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      console.error('Error reading playlists', e);
-      return [];
-    }
-  },
-  savePlaylists(playlists) {
-    try {
-      localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(playlists));
-    } catch (e) {
-      console.error('Error saving playlists', e);
-    }
-  },
+  getPlaylists() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.PLAYLISTS) || '[]'); } catch(e){ return []; } },
+  savePlaylists(p) { try { localStorage.setItem(STORAGE_KEYS.PLAYLISTS, JSON.stringify(p)); } catch(e){} },
   addPlaylist(name) {
-    const playlists = this.getPlaylists();
-    const newPlaylist = {
-      id: Date.now().toString(),
-      name,
-      createdAt: new Date().toISOString(),
-      items: [],
-    };
-    playlists.push(newPlaylist);
-    this.savePlaylists(playlists);
-    return newPlaylist;
+    const p = this.getPlaylists();
+    const np = { id: Date.now().toString(), name, createdAt: new Date().toISOString(), items: [] };
+    p.push(np); this.savePlaylists(p); return np;
   },
-  addToPlaylist(playlistId, item) {
-    const playlists = this.getPlaylists();
-    const playlist = playlists.find(p => p.id === playlistId);
-    if (!playlist) return null;
-    const exists = playlist.items.some(i => i.id === item.id);
-    if (exists) return playlist;
-    playlist.items.push(item);
-    this.savePlaylists(playlists);
-    return playlist;
+  addToPlaylist(pid, item) {
+    const p = this.getPlaylists(); const pl = p.find(x => x.id === pid);
+    if (!pl) return null; if (pl.items.some(i => i.id === item.id)) return pl;
+    pl.items.push(item); this.savePlaylists(p); return pl;
   },
 
-  // --- Historial de reproducción ---
-  getHistory() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      console.error('Error reading history', e);
-      return [];
-    }
-  },
+  getHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch(e){ return []; } },
   addHistory(item) {
-    const history = this.getHistory();
-    const filtered = history.filter(h => h.id !== item.id);
-    filtered.unshift({ ...item, playedAt: new Date().toISOString() });
-    const trimmed = filtered.slice(0, 50);
-    try {
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(trimmed));
-    } catch (e) {
-      console.error('Error saving history', e);
-    }
+    const h = this.getHistory(); const f = h.filter(x => x.id !== item.id);
+    f.unshift({ ...item, playedAt: new Date().toISOString() });
+    try { localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(f.slice(0,50))); } catch(e){}
   },
 
-  // --- Estadísticas ---
-  getStats() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.STATS);
-      return raw ? JSON.parse(raw) : {
-        totalUsers: 0,
-        totalPlays: 0,
-        totalVideosAdded: 0,
-        lastUpdated: new Date().toISOString(),
-      };
-    } catch (e) {
-      console.error('Error reading stats', e);
-      return { totalUsers: 0, totalPlays: 0, totalVideosAdded: 0, lastUpdated: new Date().toISOString() };
-    }
-  },
-  saveStats(stats) {
-    try {
-      stats.lastUpdated = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(stats));
-    } catch (e) {
-      console.error('Error saving stats', e);
-    }
-  },
-  incrementPlays() {
-    const stats = this.getStats();
-    stats.totalPlays = (stats.totalPlays || 0) + 1;
-    this.saveStats(stats);
-  },
-  incrementVideosAdded() {
-    const stats = this.getStats();
-    stats.totalVideosAdded = (stats.totalVideosAdded || 0) + 1;
-    this.saveStats(stats);
-  },
+  getStats() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.STATS) || '{"totalUsers":0,"totalPlays":0,"totalVideosAdded":0,"lastUpdated":""}'); } catch(e){ return { totalUsers:0,totalPlays:0,totalVideosAdded:0,lastUpdated:'' }; } },
+  saveStats(s) { try { s.lastUpdated = new Date().toISOString(); localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(s)); } catch(e){} },
+  incrementPlays() { const s = this.getStats(); s.totalPlays = (s.totalPlays||0)+1; this.saveStats(s); },
+  incrementVideosAdded() { const s = this.getStats(); s.totalVideosAdded = (s.totalVideosAdded||0)+1; this.saveStats(s); },
 
-  // --- Ranking de videos más reproducidos ---
-  getRanking() {
-    try {
-      const raw = localStorage.getItem('cp_ranking_v1');
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  },
-  saveRanking(ranking) {
-    try {
-      localStorage.setItem('cp_ranking_v1', JSON.stringify(ranking));
-    } catch (e) {
-      console.error('Error saving ranking', e);
-    }
-  },
+  getRanking() { try { return JSON.parse(localStorage.getItem('cp_ranking_v1') || '[]'); } catch(e){ return []; } },
+  saveRanking(r) { try { localStorage.setItem('cp_ranking_v1', JSON.stringify(r)); } catch(e){} },
   addToRanking(item) {
-    const ranking = this.getRanking();
-    const existing = ranking.find(r => r.id === item.id);
-    if (existing) {
-      existing.count = (existing.count || 0) + 1;
-      existing.lastPlayed = new Date().toISOString();
-    } else {
-      ranking.push({
-        id: item.id,
-        title: item.title,
-        channel: item.channel,
-        category: item.category,
-        count: 1,
-        lastPlayed: new Date().toISOString(),
-      });
-    }
-    // Ordenar por count descendente
-    ranking.sort((a, b) => (b.count || 0) - (a.count || 0));
-    this.saveRanking(ranking);
+    const r = this.getRanking(); const ex = r.find(x => x.id === item.id);
+    if (ex) { ex.count = (ex.count||0)+1; ex.lastPlayed = new Date().toISOString(); }
+    else r.push({ id: item.id, title: item.title, channel: item.channel, category: item.category, count: 1, lastPlayed: new Date().toISOString() });
+    r.sort((a,b) => (b.count||0)-(a.count||0)); this.saveRanking(r);
   },
 
-  // --- Admin ---
-  isAdmin(user) {
-    if (!user) return false;
-    return user.email === ADMIN_EMAIL;
-  },
-  setAdminEmail(email) {
-    try {
-      localStorage.setItem(STORAGE_KEYS.ADMIN_EMAIL, email);
-    } catch (e) {
-      console.error('Error saving admin email', e);
-    }
-  },
-  getAdminEmail() {
-    try {
-      return localStorage.getItem(STORAGE_KEYS.ADMIN_EMAIL) || ADMIN_EMAIL;
-    } catch (e) {
-      return ADMIN_EMAIL;
-    }
-  },
+  isAdmin(u) { return !!u && u.email === ADMIN_EMAIL; },
+  getAdminEmail() { try { return localStorage.getItem(STORAGE_KEYS.ADMIN_EMAIL) || ADMIN_EMAIL; } catch(e){ return ADMIN_EMAIL; } },
 };
 
 window.__cpStorage = storage;
