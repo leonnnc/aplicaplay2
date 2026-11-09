@@ -155,7 +155,7 @@ const app = {
       </div>
     `;
     card.addEventListener('click', (e) => {
-      this.playNow(item);
+      this.addToQueueOnly(item);
     });
     return card;
   },
@@ -175,8 +175,14 @@ const app = {
     app.showToast(`Reproduciendo ahora: ${item.title}`, 'success');
   },
   addToQueueOnly(item) {
+    const wasEmpty = this.queue.length === 0;
     this.addToQueue(item);
     this.renderQueue();
+    // Si la cola estaba vacía, empezar a reproducir este video inmediatamente
+    if (wasEmpty) {
+      this.queueIndex = 0;
+      this.playCurrent();
+    }
     app.showToast('Agregado a la lista de espera', 'success');
   },
   next() {
