@@ -1,11 +1,12 @@
 /**
  * CristianPlay - Aplicación principal
- * Versión 0.04
+ * Versión 0.05
  *
  * Buscador de videos cristianos: alabanzas, adoración, predicaciones y podcasts.
  * Reproductor de video integrado.
- * Cola tipo DJ: agregar sin interrumpir el video actual.
- * Modo música: reproducción continua tipo radio.
+ * Cola tipo DJ REAL: el video actual NO se interrumpe al agregar más.
+ * Modo aleatorio (shuffle).
+ * Similitudes de artistas.
  * Panel de administración oculto: estadísticas, usuarios y ranking (solo admin).
  */
 
@@ -14,9 +15,11 @@ const app = {
   currentQuery: '',
   results: [],
   queue: [],        // cola de reproducción tipo DJ
-  queueIndex: -1,   // índice actual en la cola
+  queueIndex: -1,   // índice del video que se está reproduciendo AHORA
   isMusicMode: false, // modo música (audio continuo)
-  currentPlayingItem: null, // item que se está reproduciendo AHORA
+  isShuffle: false,   // modo aleatorio
+  currentPlayingItem: null, // item que suena ahora
+  similarArtistsVisible: false,
 
   init() {
     // Botones de búsqueda
@@ -34,6 +37,12 @@ const app = {
       musicBtn.addEventListener('click', () => this.toggleMusicMode());
     }
 
+    // Botón modo aleatorio
+    const shuffleBtn = document.getElementById('btnShuffle');
+    if (shuffleBtn) {
+      shuffleBtn.addEventListener('click', () => this.toggleShuffle());
+    }
+
     // Cerrar modales al hacer clic fuera
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
@@ -49,6 +58,7 @@ const app = {
     // Render inicial
     this.renderResults();
     this.updateMusicModeUI();
+    this.updateShuffleUI();
   },
 
   /* ---------- Panel de Administración ---------- */
@@ -188,7 +198,43 @@ const app = {
     }
   },
 
-  /* ---------- Cola tipo DJ (sin interrumpir) ---------- */
+  /* ---------- Modo Aleatorio (Shuffle) ---------- */
+
+  toggleShuffle() {
+    this.isShuffle = !this.isShuffle;
+    this.updateShuffleUI();
+    app.showToast(
+      this.isShuffle ? 'Modo aleatorio activado' : 'Modo aleatorio desactivado',
+      this.isShuffle ? 'success' : 'info'
+    );
+  },
+
+  updateShuffleUI() {
+    const btn = document.getElementById('btnShuffle');
+    const indicator = document.getElementById('shuffleIndicator');
+    if (!btn) return;
+
+    if (this.isShuffle) {
+      btn.classList.add('active');
+      btn.textContent = '🔀 Aleatorio: ON';
+      if (indicator) indicator.textContent = '🔀 ALEATORIO';
+    } else {
+      btn.classList.remove('active');
+      btn.textContent = '🔀 Aleatorio';
+      if (indicator) indicator.textContent = '';
+    }
+  },
+
+  shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  },
+
+  /* ---------- Cola tipo DJ (SIN interrumpir el actual) ---------- */
 
   getCurrentQueueItem() {
     return this.queue[this.queueIndex] || null;
@@ -202,24 +248,31 @@ const app = {
     }
   },
 
-  // Reproducir AHORA (sí cambia el video actual)
+  // Reproducir AHORA (cambia el video actual)
   playNow(item) {
     this.addToQueue(item);
     this.queueIndex = this.queue.findIndex(q => q.id === item.id);
     this.playCurrent();
-    app.showToast(`Reproduciendo: ${item.title}`, 'success');
+    app.showToast(`Reproduciendo ahora: ${item.title}`, 'success');
   },
 
-  // Agregar a la cola SIN interrumpir el actual
+  // Agregar a la cola SIN interrumpir el actual (COMPORTAMIENTO DJ)
   addToQueueOnly(item) {
     this.addToQueue(item);
     this.renderQueue();
-    app.showToast('Agregado a la cola (no interrumpe el actual)', 'success');
+    app.showToast('Agregado a la cola de espera', 'success');
   },
 
   next() {
     if (this.queue.length === 0) return;
-    this.queueIndex = (this.queueIndex + 1) % this.queue.length;
+    if (this.isShuffle) {
+      // Aleatorio: elegir cualquier índice diferente al actual
+      const candidates = this.queue.map((_, i) => i).filter(i => i !== this.queueIndex);
+      if (candidates.length === 0) return;
+      this.queueIndex = candidates[Math.floor(Math.random() * candidates.length)];
+    } else {
+      this.queueIndex = (this.queueIndex + 1) % this.queue.length;
+    }
     this.playCurrent();
   },
 
@@ -298,7 +351,7 @@ const app = {
     list.innerHTML = '';
 
     if (this.queue.length === 0) {
-      list.innerHTML = '<div class="queue-empty">La cola está vacía. Presiona <strong>+</strong> en cualquier video para agregarlo.</div>';
+      list.innerHTML = '<div class="queue-empty">La cola está vacía. Presiona <strong>+</strong> en cualquier video para agregarlo a la espera.</div>';
       return;
     }
 
@@ -327,7 +380,6 @@ const app = {
   renderNowPlaying(item) {
     const media = document.getElementById('npMedia');
     if (this.isMusicMode) {
-      // Modo música: mostrar portada grande y controles de audio
       media.innerHTML = `
         <div class="music-player">
           <div class="music-cover" style="background-image:url('${item.thumbnail}')"></div>
@@ -342,12 +394,11 @@ const app = {
             <button class="btn btn-outline" onclick="app.next()">Siguiente ⏭</button>
           </div>
           <div class="music-note">
-            <small>🎵 Modo música: reproducción continua. El siguiente inicia automáticamente al terminar.</small>
+            <small>🎵 Modo música: reproducción continua. El siguiente inicia al terminar o al presionar Siguiente.</small>
           </div>
         </div>
       `;
     } else {
-      // Modo video: iframe de YouTube con mínimas distracciones
       media.innerHTML = `
         <div class="yt-wrapper">
           <iframe
@@ -366,6 +417,121 @@ const app = {
     }
   },
 
+  /* ---------- Similitudes de artistas ---------- */
+
+  toggleSimilarArtists(artistName) {
+    const similar = window.__cpMock.getSimilarArtists(artistName);
+    const section = document.getElementById('similarArtistsSection');
+    const list = document.getElementById('similarArtistsList');
+
+    if (this.similarArtistsVisible && document.getElementById('currentSimilarArtist').textContent === artistName) {
+      // Cerrar si ya está abierto el mismo
+      section.style.display = 'none';
+      this.similarArtistsVisible = false;
+      return;
+    }
+
+    document.getElementById('currentSimilarArtist').textContent = artistName;
+    list.innerHTML = '';
+
+    if (similar.length === 0) {
+      list.innerHTML = '<div class="similar-item">No hay artistas similares registrados para este artista.</div>';
+    } else {
+      similar.forEach(similarArtist => {
+        const div = document.createElement('div');
+        div.className = 'similar-item';
+        div.innerHTML = `
+          <div class="similar-info">
+            <strong>${this.escapeHtml(similarArtist)}</strong>
+            <span>Artista similar</span>
+          </div>
+          <div class="similar-actions">
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); app.showVideosByArtist('${similarArtist}')">Ver videos</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    section.style.display = 'block';
+    this.similarArtistsVisible = true;
+  },
+
+  showVideosByArtist(artistName) {
+    const videos = window.__cpMock.getVideosByArtist(artistName);
+    this.currentQuery = '';
+    this.currentCategory = null;
+    document.getElementById('searchInput').value = '';
+    document.getElementById('heroSearch').value = '';
+    this.setActiveChip(null);
+
+    // Mostrar solo videos de ese artista
+    const grid = document.getElementById('resultsGrid');
+    const countEl = document.getElementById('resultsCount');
+    const titleEl = document.getElementById('resultsTitle');
+    const empty = document.getElementById('emptyState');
+
+    grid.innerHTML = '';
+    countEl.textContent = `${videos.length} resultado${videos.length !== 1 ? 's' : ''}`;
+    titleEl.textContent = `Videos de ${artistName}`;
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+
+    videos.forEach(item => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      const isCurrent = this.getCurrentQueueItem() && this.getCurrentQueueItem().id === item.id;
+
+      card.innerHTML = `
+        <div class="card-thumb">
+          <img src="${item.thumbnail}" alt="${item.title}" loading="lazy" />
+          <div class="card-badge">VIDEO</div>
+          <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.7);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,255,255,0.1);">
+            ${item.duration}
+          </div>
+          ${isCurrent ? '<div style="position:absolute;top:10px;left:10px;background:var(--primary);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.7rem;font-weight:800;">EN VIVO</div>' : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${this.escapeHtml(item.title)}</div>
+          <div class="card-channel">${this.escapeHtml(item.channel)}</div>
+          <div class="card-actions">
+            <button class="btn-play" data-item-id="${item.id}" title="Reproducir AHORA">
+              ▶ Ahora
+            </button>
+            <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola de espera">
+              +
+            </button>
+            <button class="btn-similar" data-artist="${this.escapeHtml(item.artist || item.channel)}" title="Ver artistas similares">
+              🔗
+            </button>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-play') || e.target.closest('.btn-add') || e.target.closest('.btn-similar')) return;
+        this.addToQueueOnly(item);
+      });
+
+      card.querySelector('.btn-play').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.playNow(item);
+      });
+      card.querySelector('.btn-add').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.addToQueueOnly(item);
+      });
+      card.querySelector('.btn-similar').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleSimilarArtists(item.artist || item.channel);
+      });
+
+      grid.appendChild(card);
+    });
+
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+  },
+
   /* ---------- Búsqueda y categorías ---------- */
 
   goHome() {
@@ -375,6 +541,9 @@ const app = {
     document.getElementById('heroSearch').value = '';
     this.setActiveChip(null);
     this.renderResults();
+    const similarSection = document.getElementById('similarArtistsSection');
+if (similarSection) similarSection.style.display = 'none';
+    this.similarArtistsVisible = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
@@ -384,6 +553,9 @@ const app = {
     this.currentCategory = null;
     this.setActiveChip(null);
     this.renderResults();
+    const similarSection = document.getElementById('similarArtistsSection');
+if (similarSection) similarSection.style.display = 'none';
+    this.similarArtistsVisible = false;
   },
 
   searchFromHero() {
@@ -394,6 +566,9 @@ const app = {
     document.getElementById('searchInput').value = input;
     this.renderResults();
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    const similarSection = document.getElementById('similarArtistsSection');
+if (similarSection) similarSection.style.display = 'none';
+    this.similarArtistsVisible = false;
   },
 
   filterByCategory(category, el) {
@@ -404,6 +579,9 @@ const app = {
     this.setActiveChip(el ? category : null);
     this.renderResults();
     document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    const similarSection = document.getElementById('similarArtistsSection');
+if (similarSection) similarSection.style.display = 'none';
+    this.similarArtistsVisible = false;
   },
 
   setActiveChip(category) {
@@ -469,21 +647,25 @@ const app = {
             <button class="btn-play" data-item-id="${item.id}" title="Reproducir AHORA (cambia el actual)">
               ▶ Ahora
             </button>
-            <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola (no interrumpe)">
+            <button class="btn-add" data-item-id="${item.id}" title="Agregar a la cola de espera (no interrumpe)">
               +
+            </button>
+            <button class="btn-similar" data-artist="${this.escapeHtml(item.artist || item.channel)}" title="Ver artistas similares">
+              🔗
             </button>
           </div>
         </div>
       `;
 
-      // Todo el cuadro es clickeable para agregar a cola (sin interrumpir)
+      // Clic en el cuadro: agregar a cola de espera (NO interrumpe)
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-play') || e.target.closest('.btn-add')) return;
+        if (e.target.closest('.btn-play') || e.target.closest('.btn-add') || e.target.closest('.btn-similar')) return;
         this.addToQueueOnly(item);
       });
 
       const btnPlay = card.querySelector('.btn-play');
       const btnAdd = card.querySelector('.btn-add');
+      const btnSimilar = card.querySelector('.btn-similar');
       btnPlay.addEventListener('click', (e) => {
         e.stopPropagation();
         this.playNow(item);
@@ -491,6 +673,10 @@ const app = {
       btnAdd.addEventListener('click', (e) => {
         e.stopPropagation();
         this.addToQueueOnly(item);
+      });
+      btnSimilar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleSimilarArtists(item.artist || item.channel);
       });
 
       grid.appendChild(card);
@@ -579,7 +765,7 @@ const app = {
       });
     }
     html += `<button class="btn btn-primary btn-block mt-3" onclick="app.closeUserPanel(); app.playNowFromPlaylist()">Reproducir primera AHORA</button>`;
-    html += `<button class="btn btn-outline btn-block mt-2" onclick="app.closeUserPanel(); app.addPlaylistToQueue()">Agregar toda a la cola</button>`;
+    html += `<button class="btn btn-outline btn-block mt-2" onclick="app.addPlaylistToQueue()">Agregar toda a la cola de espera</button>`;
     document.getElementById('playlistsList').innerHTML = html;
   },
 
@@ -595,12 +781,11 @@ const app = {
     if (!p) return;
     p.items.forEach(item => this.addToQueue(item));
     this.renderQueue();
-    app.showToast(`${p.items.length} videos agregados a la cola`, 'success');
+    app.showToast(`${p.items.length} videos agregados a la cola de espera`, 'success');
     this.closeUserPanel();
   },
 
   playItemFromPlaylist() {
-    // Mantener compatibilidad
     if (this._playlistFirstItem) {
       this.playNow(this._playlistFirstItem);
     }

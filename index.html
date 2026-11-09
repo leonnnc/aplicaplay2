@@ -52,6 +52,9 @@
         <button class="nav-btn nav-btn-primary" onclick="app.toggleMusicMode()" id="btnMusicMode" style="display:flex;">
           🎵 Modo Música
         </button>
+        <button class="nav-btn nav-btn-primary" onclick="app.toggleShuffle()" id="btnShuffle" style="display:flex;">
+          🔀 Aleatorio
+        </button>
       </div>
     </div>
   </nav>
@@ -87,6 +90,7 @@
     <div class="np-header">
       <h3>📺 Reproduciendo ahora</h3>
       <span id="musicModeIndicator" class="music-indicator"></span>
+      <span id="shuffleIndicator" class="music-indicator"></span>
       <button class="btn btn-outline btn-sm" onclick="app.clearQueue()">Limpiar cola</button>
     </div>
     <div class="np-media" id="npMedia">
@@ -108,6 +112,16 @@
     <div class="queue-list" id="queueList">
       <div class="queue-empty">La cola está vacía. Presiona <strong>+</strong> en cualquier video para agregarlo.</div>
     </div>
+  </section>
+
+  <!-- Artistas Similares -->
+  <section class="similar-section" id="similarArtistsSection" style="display:none;">
+    <div class="similar-header">
+      <h3>🔗 Artistas Similares</h3>
+      <span class="similar-current-artist" id="currentSimilarArtist"></span>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('similarArtistsSection').style.display='none'; app.similarArtistsVisible=false;">Cerrar</button>
+    </div>
+    <div class="similar-list" id="similarArtistsList"></div>
   </section>
 
   <!-- Resultados -->
