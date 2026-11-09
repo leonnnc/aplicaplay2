@@ -83,9 +83,15 @@ const app = {
   renderFeatured() {
     const grid = document.getElementById('contentGrid');
     const title = document.getElementById('contentTitle');
-    const featured = window.__cpMock.getMockResults('', null).slice(0, 8);
+    const featured = window.__cpMock.getMockResults('', this.currentCategory).slice(0, 8);
     grid.innerHTML = '';
-    title.textContent = '🎵 Videos Cristianos Destacados';
+    const labels = {
+      alabanza: '🎵 Alabanzas Cristianas',
+      adoracion: '🙏 Adoración y Alabanza',
+      predicacion: '📖 Predicaciones y Sermones',
+      podcast: '🎙️ Podcasts Cristianos'
+    };
+    title.textContent = this.currentCategory ? labels[this.currentCategory] : '🎵 Videos Cristianos Destacados';
     document.getElementById('emptyState').style.display = 'none';
     featured.forEach(item => grid.appendChild(this.createCard(item, false)));
   },
@@ -99,8 +105,23 @@ const app = {
     this.currentCategory = null;
     this.currentQuery = '';
     document.getElementById('searchInput').value = '';
+    this.setActiveChip(null);
     this.renderFeatured();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+  filterByCategory(category, el) {
+    this.currentCategory = category;
+    this.currentQuery = '';
+    document.getElementById('searchInput').value = '';
+    this.setActiveChip(el ? category : null);
+    this.renderFeatured();
+    document.getElementById('contentSection').scrollIntoView({ behavior: 'smooth' });
+  },
+  setActiveChip(category) {
+    document.querySelectorAll('#categories .chip').forEach(chip => {
+      const isActive = chip.dataset.category === category;
+      chip.classList.toggle('chip-active', isActive);
+    });
   },
   renderSearchResults() {
     const grid = document.getElementById('contentGrid');
@@ -108,7 +129,12 @@ const app = {
     const empty = document.getElementById('emptyState');
     const results = window.__cpMock.getMockResults(this.currentQuery, this.currentCategory);
     grid.innerHTML = '';
-    title.textContent = this.currentQuery ? `Resultados para "${this.currentQuery}"` : 'Resultados';
+    title.textContent = this.currentQuery ? `Resultados para "${this.currentQuery}"` : (this.currentCategory ? {
+      alabanza: '🎵 Alabanzas Cristianas',
+      adoracion: '🙏 Adoración y Alabanza',
+      predicacion: '📖 Predicaciones y Sermones',
+      podcast: '🎙️ Podcasts Cristianos'
+    }[this.currentCategory] : 'Resultados');
     if (results.length === 0) { empty.style.display='block'; grid.style.display='none'; return; }
     empty.style.display='none'; grid.style.display='grid';
     results.forEach(item => grid.appendChild(this.createCard(item, false)));

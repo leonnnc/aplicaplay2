@@ -56,7 +56,18 @@
     <div class="hero-bg"></div>
   </header>
 
-  <!-- Resultados / Videos destacados (inmediatamente abajo de la búsqueda) -->
+  <!-- Categorías rápidas -->
+  <section class="categories" id="categories">
+    <h2 class="section-title">Explorar por categoría</h2>
+    <div class="category-grid">
+      <button class="chip chip-active" data-category="alabanza" onclick="app.filterByCategory('alabanza', this)">Alabanza</button>
+      <button class="chip" data-category="adoracion" onclick="app.filterByCategory('adoracion', this)">Adoración</button>
+      <button class="chip" data-category="predicacion" onclick="app.filterByCategory('predicacion', this)">Predicaciones</button>
+      <button class="chip" data-category="podcast" onclick="app.filterByCategory('podcast', this)">Podcasts</button>
+    </div>
+  </section>
+
+  <!-- Resultados / Videos destacados (inmediatamente abajo de las categorías) -->
   <section class="content-section" id="contentSection">
     <div class="content-header">
       <h2 id="contentTitle">🎵 Videos Cristianos Destacados</h2>
