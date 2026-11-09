@@ -1,10 +1,11 @@
 /**
  * CristianPlay - Aplicación principal
- * Versión 0.02
+ * Versión 0.03
  *
  * Buscador de videos cristianos: alabanzas, adoración, predicaciones y podcasts.
  * Reproductor de video integrado justo debajo de las categorías.
  * Cola tipo DJ: selecciona los videos que quieras ver (1, 2, 3…) en el mismo entorno.
+ * Panel de administración oculto: estadísticas, usuarios y ranking (solo admin).
  */
 
 const app = {
@@ -24,18 +25,139 @@ const app = {
       if (e.key === 'Enter') this.searchFromHero();
     });
 
-    // Cerrar modales al hacer clic fuera (auth y usuario)
+    // Cerrar modales al hacer clic fuera (auth, usuario y admin)
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.classList.remove('open');
       });
     });
 
+    // Verificar si es administrador y mostrar botón admin
+    if (auth.isAdmin()) {
+      document.getElementById('adminBtn').style.display = 'flex';
+    }
+
     // Render inicial
     this.renderResults();
   },
 
-  /* ---------- Cola tipo DJ (solo video) ---------- */
+  /* ---------- Panel de Administración ---------- */
+
+  toggleAdminPanel() {
+    const modal = document.getElementById('adminModal');
+    if (modal.classList.contains('open')) {
+      this.closeAdminPanel();
+    } else {
+      this.openAdminPanel();
+    }
+  },
+
+  openAdminPanel() {
+    if (!auth.isAdmin()) {
+      app.showToast('Acceso denegado: solo el administrador puede ingresar', 'danger');
+      return;
+    }
+    document.getElementById('adminModal').classList.add('open');
+    this.switchAdminTab('stats');
+  },
+
+  closeAdminPanel() {
+    document.getElementById('adminModal').classList.remove('open');
+  },
+
+  switchAdminTab(tab) {
+    // Actualizar pestañas
+    document.querySelectorAll('.admin-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    // Mostrar panel correspondiente
+    document.querySelectorAll('.admin-panel').forEach(p => {
+      p.classList.toggle('hidden', p.id !== `admin${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+    });
+
+    // Renderizar contenido según la pestaña
+    if (tab === 'stats') this.renderAdminStats();
+    if (tab === 'users') this.renderAdminUsers();
+    if (tab === 'ranking') this.renderAdminRanking();
+  },
+
+  renderAdminStats() {
+    const stats = window.__cpStorage.getStats();
+    const playlists = window.__cpStorage.getPlaylists();
+    const history = window.__cpStorage.getHistory();
+
+    document.getElementById('statTotalUsers').textContent = stats.totalUsers || 0;
+    document.getElementById('statTotalPlays').textContent = stats.totalPlays || 0;
+    document.getElementById('statTotalVideos').textContent = stats.totalVideosAdded || 0;
+    document.getElementById('statTotalPlaylists').textContent = playlists.length;
+
+    // Actividad reciente
+    const activity = document.getElementById('adminRecentActivity');
+    if (history.length === 0) {
+      activity.innerHTML = '<div class="activity-item">Sin actividad registrada</div>';
+    } else {
+      activity.innerHTML = history.slice(0, 10).map(h => `
+        <div class="activity-item">
+          <div class="activity-title">${this.escapeHtml(h.title)}</div>
+          <div class="activity-meta">${this.escapeHtml(h.channel)} • ${new Date(h.playedAt).toLocaleDateString('es-ES')}</div>
+        </div>
+      `).join('');
+    }
+  },
+
+  renderAdminUsers() {
+    const user = window.__cpAuth.getUser();
+    const list = document.getElementById('adminUsersList');
+    const isAdminUser = auth.isAdmin();
+
+    if (!user) {
+      list.innerHTML = '<div class="user-item"><div class="user-info"><strong>No hay usuarios registrados</strong><span>Inicia sesión para ver tu cuenta</span></div></div>';
+      return;
+    }
+
+    // En localStorage solo hay un usuario a la vez (simulación), mostramos el actual
+    list.innerHTML = `
+      <div class="user-item ${isAdminUser ? 'admin-user' : ''}">
+        <div class="user-info">
+          <strong>${this.escapeHtml(user.name)}</strong>
+          <span>${this.escapeHtml(user.email)} ${isAdminUser ? '• (Administrador)' : ''}</span>
+        </div>
+        <div class="user-actions">
+          <button class="btn btn-outline btn-sm" onclick="app.deleteUser()">Eliminar cuenta</button>
+        </div>
+      </div>
+    `;
+  },
+
+  deleteUser() {
+    if (confirm('¿Estás seguro de que deseas eliminar tu cuenta?')) {
+      auth.logout();
+      app.showToast('Cuenta eliminada', 'success');
+    }
+  },
+
+  renderAdminRanking() {
+    const ranking = window.__cpStorage.getRanking();
+    const list = document.getElementById('adminRankingList');
+
+    if (ranking.length === 0) {
+      list.innerHTML = '<div class="ranking-item"><div class="ranking-position">-</div><div class="ranking-info"><strong>Sin datos todavía</strong><span>No se han reproducido videos para el ranking</span></div></div>';
+      return;
+    }
+
+    list.innerHTML = ranking.slice(0, 10).map((item, idx) => `
+      <div class="ranking-item">
+        <div class="ranking-position">${idx + 1}</div>
+        <div class="ranking-info">
+          <strong>${this.escapeHtml(item.title)}</strong>
+          <span>${this.escapeHtml(item.channel)} • ${item.category}</span>
+          <div class="ranking-count">${item.count} reproducción${item.count !== 1 ? 'es' : ''}</div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  /* ---------- Cola tipo DJ ---------- */
 
   getCurrentQueueItem() {
     return this.queue[this.queueIndex] || null;
@@ -45,6 +167,7 @@ const app = {
     const exists = this.queue.some(q => q.id === item.id);
     if (!exists) {
       this.queue.push(item);
+      window.__cpStorage.incrementVideosAdded();
     }
   },
 
@@ -85,15 +208,24 @@ const app = {
     // Llamar al reproductor (solo video embebido)
     player.play(item);
 
+    // Registrar en estadísticas y ranking
+    window.__cpStorage.incrementPlays();
+    window.__cpStorage.addToRanking(item);
+    window.__cpStorage.addHistory(item);
+
+    // Si es admin, actualizar stats del panel si está abierto
+    if (auth.isAdmin() && document.getElementById('adminModal').classList.contains('open')) {
+      this.renderAdminStats();
+      this.renderAdminRanking();
+    }
+
     this.renderQueue();
   },
 
   togglePlayPause() {
     // Para video de YouTube embebido, el control de play/pause está dentro del iframe.
-    // Aquí solo marcamos el estado visual si aplica.
     const item = this.getCurrentQueueItem();
     if (!item) return;
-    // No hay audioEl para video; el iframe de YouTube tiene sus propios controles.
     app.showToast('Usa los controles del video para pausar/reproducir', 'info');
   },
 

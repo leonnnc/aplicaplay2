@@ -83,15 +83,24 @@ const auth = {
       createdAt: new Date().toISOString(),
     };
     window.__cpStorage.setUser(user);
+    const stats = window.__cpStorage.getStats();
+    stats.totalUsers = (stats.totalUsers || 0) + 1;
+    window.__cpStorage.saveStats(stats);
     this.updateUI();
     this.closeAuthModal();
     this.showToast(`Cuenta creada para ${user.name}`, 'success');
+  },
+
+  isAdmin() {
+    const user = this.getUser();
+    return window.__cpStorage.isAdmin(user);
   },
 
   logout() {
     window.__cpStorage.clearUser();
     this.updateUI();
     app.closeUserPanel();
+    app.closeAdminPanel();
     this.showToast('Sesión cerrada', 'success');
   },
 

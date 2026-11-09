@@ -45,6 +45,10 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="7"/><polyline points="12 5 12 19"/></svg>
           <span id="userBtnText">Mi cuenta</span>
         </button>
+        <button class="nav-btn nav-btn-primary" onclick="app.toggleAdminPanel()" id="adminBtn" style="display:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15 18H6z"/><circle cx="12" cy="10" r="3"/></svg>
+          Admin
+        </button>
       </div>
     </div>
   </nav>
@@ -194,6 +198,80 @@
         <h4>Historial reciente</h4>
         <div class="history-list" id="historyList">
           <div class="history-item">No hay historial todavía</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Administración (oculto, solo admin) -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal admin-modal" style="max-width: 900px; max-height: 90vh;">
+      <div class="admin-header">
+        <button class="modal-close" onclick="app.closeAdminPanel()">&times;</button>
+        <h3>🔐 Panel de Administración</h3>
+        <span class="admin-badge">SOLO ADMINISTRADOR</span>
+      </div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="stats" onclick="app.switchAdminTab('stats')">Estadísticas</button>
+        <button class="admin-tab" data-tab="users" onclick="app.switchAdminTab('users')">Usuarios</button>
+        <button class="admin-tab" data-tab="ranking" onclick="app.switchAdminTab('ranking')">Ranking</button>
+      </div>
+
+      <!-- Estadísticas -->
+      <div class="admin-panel active" id="adminStats">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number" id="statTotalUsers">0</div>
+            <div class="stat-label">Usuarios registrados</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statTotalPlays">0</div>
+            <div class="stat-label">Reproducciones totales</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statTotalVideos">0</div>
+            <div class="stat-label">Videos agregados a cola</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statTotalPlaylists">0</div>
+            <div class="stat-label">Playlists creadas</div>
+          </div>
+        </div>
+        <div class="admin-section">
+          <h4>Actividad reciente</h4>
+          <div id="adminRecentActivity" class="activity-list">
+            <div class="activity-item">Sin actividad registrada</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Usuarios -->
+      <div class="admin-panel hidden" id="adminUsers">
+        <div class="admin-section">
+          <h4>Usuarios registrados</h4>
+          <div id="adminUsersList" class="users-list">
+            <div class="user-item">
+              <div class="user-info">
+                <strong>Cargando...</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ranking -->
+      <div class="admin-panel hidden" id="adminRanking">
+        <div class="admin-section">
+          <h4>🏆 Ranking de videos más reproducidos</h4>
+          <div id="adminRankingList" class="ranking-list">
+            <div class="ranking-item">
+              <div class="ranking-position">-</div>
+              <div class="ranking-info">
+                <strong>Sin datos todavía</strong>
+                <span>No se han reproducido videos</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
