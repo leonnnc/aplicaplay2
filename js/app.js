@@ -163,16 +163,21 @@ const app = {
 
   renderNowPlaying(item) {
     const media = document.getElementById('npMedia');
-    // Solo video de YouTube embebido
+    // Solo video de YouTube embebido con mínimas distracciones
     media.innerHTML = `
-      <iframe
-        width="560" height="315"
-        src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1"
-        title="${item.title}"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen
-      ></iframe>
+      <div class="yt-wrapper">
+        <iframe
+          width="560" height="315"
+          src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1&fs=1&cc_load_policy=0&iv_load_policy=3"
+          title="${item.title}"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          allowfullscreen
+        ></iframe>
+        <div class="yt-note">
+          <small>Reproducido desde YouTube. Los anuncios (si los hay) son gestionados por YouTube, no por CristianPlay.</small>
+        </div>
+      </div>
     `;
   },
 
