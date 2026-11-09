@@ -131,15 +131,23 @@ const app = {
           <div class="card-title">${this.escapeHtml(item.title)}</div>
           <div class="card-channel">${this.escapeHtml(item.channel)}</div>
           <div class="card-actions">
-            <button class="btn-play" onclick="app.playItem(${JSON.stringify(item).replace(/"/g, '&quot;')})" title="Reproducir">
+            <button class="btn-play" data-item-id="${item.id}" title="Reproducir">
               ▶
             </button>
-            <button class="btn-add" onclick="app.addToPlaylistQuick(${JSON.stringify(item).replace(/"/g, '&quot;')})" title="Agregar a playlist">
+            <button class="btn-add" data-item-id="${item.id}" title="Agregar a playlist">
               +
             </button>
           </div>
         </div>
       `;
+      // Event listeners directos (evita problemas de comillas en onclick)
+      const btnPlay = card.querySelector('.btn-play');
+      const btnAdd = card.querySelector('.btn-add');
+      btnPlay.addEventListener('click', () => this.playItem(item));
+      btnAdd.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.addToPlaylistQuick(item);
+      });
       // Doble clic en la card para reproducir
       card.querySelector('.card-body').addEventListener('dblclick', () => this.playItem(item));
       grid.appendChild(card);
@@ -245,8 +253,14 @@ const app = {
         `;
       });
     }
-    html += `<button class="btn btn-primary btn-block mt-3" onclick="app.closeUserPanel(); app.playItem(${JSON.stringify(items[0] || {title:'',channel:'',type:'audio'}).replace(/"/g,'&quot;')})">Reproducir primera</button>`;
+    html += `<button class="btn btn-primary btn-block mt-3" onclick="app.closeUserPanel(); app.playItemFromPlaylist()">Reproducir primera</button>`;
     document.getElementById('playlistsList').innerHTML = html;
+  },
+
+  playItemFromPlaylist() {
+    if (this._playlistFirstItem) {
+      this.playItem(this._playlistFirstItem);
+    }
   },
 
   showToast(message, type = 'success') {

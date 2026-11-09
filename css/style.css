@@ -728,6 +728,18 @@ ul, ol { list-style: none; }
 }
 .player-actions .btn-block { width: 100%; }
 
+.fullscreen-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 250 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  transform: none !important;
+}
+
 /* ===== Footer ===== */
 footer {
   padding: 3rem 1.5rem 2rem;

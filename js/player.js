@@ -24,7 +24,10 @@ const player = {
     document.getElementById('miniPlayPause').addEventListener('click', () => this.togglePlayPause());
     document.getElementById('miniPrev').addEventListener('click', () => app.showToast('Anterior - función en próxima versión', 'warning'));
     document.getElementById('miniNext').addEventListener('click', () => app.showToast('Siguiente - función en próxima versión', 'warning'));
-    document.getElementById('miniExpand').addEventListener('click', () => this.openFull(currentItem));
+    // miniExpand se inicializa también desde app.init(); se deja aquí como respaldo
+    document.getElementById('miniExpand').addEventListener('click', () => {
+      if (this.currentItem) this.openFull(this.currentItem);
+    });
     document.getElementById('miniVolume').addEventListener('input', (e) => {
       if (this.audioEl) this.audioEl.volume = parseFloat(e.target.value);
     });
@@ -82,10 +85,10 @@ const player = {
       embed.innerHTML = `
         <iframe
           width="560" height="315"
-          src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0"
+          src="https://www.youtube.com/embed/${item.youtubeId}?modestbranding=1&rel=0&showinfo=0&controls=1&autoplay=1"
           title="${item.title}"
           frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowfullscreen
         ></iframe>
       `;
@@ -145,6 +148,24 @@ const player = {
   openInYoutube() {
     if (!this.currentItem || !this.currentItem.youtubeId) return;
     window.open(`https://www.youtube.com/watch?v=${this.currentItem.youtubeId}`, '_blank');
+  },
+
+  toggleFullscreen() {
+    const modal = document.getElementById('playerModal');
+    const embed = document.getElementById('playerEmbed');
+    const target = embed.querySelector('iframe') || embed;
+    if (!target) return;
+
+    if (!document.fullscreenElement) {
+      target.requestFullscreen().catch(() => {
+        // Fallback: maximizar el modal
+        modal.classList.add('fullscreen-modal');
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        modal.classList.remove('fullscreen-modal');
+      });
+    }
   },
 
   updateMiniPlayer(item) {
