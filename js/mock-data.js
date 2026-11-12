@@ -24,9 +24,14 @@ function passesCategory(text, category) {
     alabanza: ['alabanza','alabanzas','himno','himnos','coral','cantemos','adoramos','adorando'],
     adoracion: ['adoración','adoracion','adorando','adoremos','gloria','halleluya','hallelujah'],
     predicacion: ['predicación','predicacion','sermón','sermon','pastor','iglesia','biblia','palabra de dios'],
-    podcast: ['podcast','predicador','conferencia','entrevista']
+    podcast: ['podcast','predicador','conferencia','entrevista'],
+    'en vivo': ['en vivo', 'en directo', 'transmisión', 'transmision', 'vivo', 'directo', 'catedral de fe', 'centro de avivamiento']
   };
   return (maps[category]||[]).some(k => t.includes(k));
+}
+
+function isLiveStream(item) {
+  return item.isLive === true;
 }
 
 const MOCK_VIDEOS = [
@@ -39,7 +44,12 @@ const MOCK_VIDEOS = [
   { id:'yt_007', title:'Predicación: Salmo 23 - El Señor es mi Pastor', channel:'Palabra Viva Ministerio', category:'predicacion', duration:'29:40', thumbnail:'https://i.ytimg.com/vi/p2P6I1Z4C7g/mqdefault.jpg', youtubeId:'p2P6I1Z4C7g', type:'video', description:'Exposición del Salmo 23, el Señor es mi pastor.', artist:'Palabra Viva Ministerio' },
   { id:'yt_008', title:'Ricardo Rodriguez - Predicación Unción del Espíritu', channel:'Ricardo Rodriguez Oficial', category:'predicacion', duration:'44:20', thumbnail:'https://i.ytimg.com/vi/L_jWHffIx5E/mqdefault.jpg', youtubeId:'L_jWHffIx5E', type:'video', description:'Predicación con unción del Espíritu Santo.', artist:'Ricardo Rodriguez' },
   { id:'yt_009', title:'Marcela Gandara - Adoración y Gloria', channel:'Marcela Gandara Oficial', category:'adoracion', duration:'36:50', thumbnail:'https://i.ytimg.com/vi/A_ZD2V6R6uU/mqdefault.jpg', youtubeId:'A_ZD2V6R6uU', type:'video', description:'Adoración y gloria con Marcela Gandara.', artist:'Marcela Gandara' },
-  { id:'yt_010', title:'Marco Barrientos - Aire Fresco (En Vivo)', channel:'Marco Barrientos Oficial', category:'alabanza', duration:'1:15:00', thumbnail:'https://i.ytimg.com/vi/3JH_D39qlOQ/mqdefault.jpg', youtubeId:'3JH_D39qlOQ', type:'video', description:'Aire fresco en vivo con Marco Barrientos.', artist:'Marco Barrientos' }
+  { id:'yt_010', title:'Marco Barrientos - Aire Fresco (En Vivo)', channel:'Marco Barrientos Oficial', category:'alabanza', duration:'1:15:00', thumbnail:'https://i.ytimg.com/vi/3JH_D39qlOQ/mqdefault.jpg', youtubeId:'3JH_D39qlOQ', type:'video', description:'Aire fresco en vivo con Marco Barrientos.', artist:'Marco Barrientos' },
+
+  // Transmisiones en vivo - Catedral de Fe Centro de Avivamiento
+  { id:'live_001', title:'🔴 EN VIVO - Servicio Dominical - Catedral de Fe Centro de Avivamiento', channel:'Catedral de Fe Centro de Avivamiento', category:'en vivo', duration:'LIVE', thumbnail:'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg', youtubeId:'dQw4w9WgXcQ', type:'video', description:'Transmisión en vivo del servicio dominical de la Catedral de Fe Centro de Avivamiento.', artist:'Catedral de Fe Centro de Avivamiento', isLive: true },
+  { id:'live_002', title:'🔴 EN VIVO - Oración y Alabanza - Catedral de Fe Centro de Avivamiento', channel:'Catedral de Fe Centro de Avivamiento', category:'en vivo', duration:'LIVE', thumbnail:'https://i.ytimg.com/vi/j5-yKhDd64s/mqdefault.jpg', youtubeId:'j5-yKhDd64s', type:'video', description:'Transmisión en vivo de oración y alabanza.', artist:'Catedral de Fe Centro de Avivamiento', isLive: true },
+  { id:'live_003', title:'🔴 EN VIVO - Predicación de la Palabra - Catedral de Fe Centro de Avivamiento', channel:'Catedral de Fe Centro de Avivamiento', category:'en vivo', duration:'LIVE', thumbnail:'https://i.ytimg.com/vi/kffacxfA7G4/mqdefault.jpg', youtubeId:'kffacxfA7G4', type:'video', description:'Transmisión en vivo de predicación de la Palabra de Dios.', artist:'Catedral de Fe Centro de Avivamiento', isLive: true }
 ];
 
 const MOCK_FILTERED = MOCK_VIDEOS.filter(v => isChristianContent(v.title, v.description));

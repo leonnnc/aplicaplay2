@@ -89,7 +89,8 @@ const app = {
       alabanza: '🎵 Alabanzas Cristianas',
       adoracion: '🙏 Adoración y Alabanza',
       predicacion: '📖 Predicaciones y Sermones',
-      podcast: '🎙️ Podcasts Cristianos'
+      podcast: '🎙️ Podcasts Cristianos',
+      'en vivo': '🔴 En Vivo - Catedral de Fe Centro de Avivamiento'
     };
     title.textContent = this.currentCategory ? labels[this.currentCategory] : '🎵 Videos Cristianos Destacados';
     document.getElementById('emptyState').style.display = 'none';
@@ -133,7 +134,8 @@ const app = {
       alabanza: '🎵 Alabanzas Cristianas',
       adoracion: '🙏 Adoración y Alabanza',
       predicacion: '📖 Predicaciones y Sermones',
-      podcast: '🎙️ Podcasts Cristianos'
+      podcast: '🎙️ Podcasts Cristianos',
+      'en vivo': '🔴 En Vivo - Catedral de Fe Centro de Avivamiento'
     }[this.currentCategory] : 'Resultados');
     if (results.length === 0) { empty.style.display='block'; grid.style.display='none'; return; }
     empty.style.display='none'; grid.style.display='grid';
@@ -145,8 +147,9 @@ const app = {
     card.innerHTML = `
       <div class="card-thumb">
         <img src="${item.thumbnail}" alt="${item.title}" loading="lazy" />
-        <div class="card-badge">VIDEO</div>
+        <div class="card-badge">${item.isLive ? 'EN VIVO' : 'VIDEO'}</div>
         <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.7);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,255,255,0.1);">${item.duration}</div>
+        ${item.isLive ? '<div style="position:absolute;top:10px;left:10px;background:linear-gradient(135deg, #ef4444, #dc2626);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.7rem;font-weight:800;">🔴 EN VIVO</div>' : ''}
         ${isCurrent ? '<div style="position:absolute;top:10px;left:10px;background:var(--primary);color:#fff;padding:0.35rem 0.6rem;border-radius:6px;font-size:0.7rem;font-weight:800;">EN VIVO</div>' : ''}
       </div>
       <div class="card-body">

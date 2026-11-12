@@ -118,6 +118,43 @@ ul, ol { list-style: none; }
   box-shadow: 0 0 20px var(--primary-glow);
 }
 
+/* Chip En Vivo */
+.live-chip {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border: 1px solid #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  animation: livePulse 2s infinite;
+}
+.live-chip.chip-active {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes livePulse {
+  0% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.8); }
+  100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+}
+
+/* Badge EN VIVO en cards */
+.live-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255,255,255,0.2);
+  animation: livePulse 2s infinite;
+  z-index: 10;
+}
+
 /* Contenido (destacados o resultados) */
 .content-section { padding: 1.5rem 1rem; border-bottom: 1px solid var(--border); }
 .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem; }
